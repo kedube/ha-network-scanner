@@ -1,0 +1,22 @@
+# Tooling configuration only. The integration itself ships from
+# custom_components/network_scanner and is not a Python package.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+source = ["custom_components/network_scanner"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 95
+
+[tool.ruff]
+# Python 3.12 is the oldest version the minimum supported Home Assistant
+# (hacs.json) runs on, and the code uses 3.12 syntax (`type` aliases).
+target-version = "py312"

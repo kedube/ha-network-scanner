@@ -1,0 +1,42 @@
+[
+  {
+    "ip": "192.168.1.1",
+    "mac": "10:27:F5:00:00:01",
+    "name": "Unknown Device",
+    "type": "Unknown Device",
+    "vendor": "TP-Link Technologies",
+    "hostname": "router"
+  },
+  {
+    "ip": "192.168.1.9",
+    "mac": "F0:27:2D:00:00:09",
+    "name": "Unknown Device",
+    "type": "Unknown Device",
+    "vendor": "Amazon Technologies",
+    "hostname": "living-room-tv"
+  },
+  {
+    "ip": "192.168.1.10",
+    "mac": "BC:14:14:F1:81:1B",
+    "name": "Brother Printer",
+    "type": "Brother",
+    "vendor": "Brother Industries",
+    "hostname": null
+  },
+  {
+    "ip": "192.168.1.23",
+    "mac": "DA:A1:19:00:00:23",
+    "name": "Unknown Device",
+    "type": "Unknown Device",
+    "vendor": "Unknown",
+    "hostname": null
+  },
+  {
+    "ip": "192.168.1.100",
+    "mac": "00:11:32:00:01:00",
+    "name": "Unknown Device",
+    "type": "Unknown Device",
+    "vendor": "Synology Incorporated",
+    "hostname": "nas"
+  }
+]

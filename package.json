@@ -1,0 +1,18 @@
+{
+  "name": "ha-network-scanner-card-tests",
+  "private": true,
+  "description": "Tests and README screenshots for the Network Scanner dashboard card. Not needed to install or use the integration.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test \"tests/frontend/*.test.mjs\"",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@mdi/js": "7.4.47",
+    "jsdom": "30.1.1",
+    "playwright-core": "1.63.0"
+  }
+}

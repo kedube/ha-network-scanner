@@ -1,0 +1,18 @@
+# Weekly update PRs. Each one runs CI, so a new Home Assistant release (via the
+# pinned pytest-homeassistant-custom-component) is tested before it is merged.
+# Dependency updates don't touch custom_components/, so merging one doesn't
+# publish a release by itself.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly

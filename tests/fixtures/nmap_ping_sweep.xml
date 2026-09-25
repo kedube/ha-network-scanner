@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<!-- `nmap -oX - 192.168.1.0/24 -sn -n -T4 ...` as run by the integration, trimmed.
+     192.168.1.50 is the scanning host itself: nmap never reports its own MAC.
+     192.168.1.100 carries a PTR name, which nmap only supplies when run without -n. -->
+<nmaprun scanner="nmap" args="nmap -oX - 192.168.1.0/24 -sn -n -T4 --min-parallelism 128 --min-rate 500 --max-retries 1" start="1790000000" startstr="Thu Sep 24 12:00:00 2026" version="7.95" xmloutputversion="1.05">
+<verbose level="0"/>
+<debugging level="0"/>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.1" addrtype="ipv4"/>
+<address addr="10:27:F5:00:00:01" addrtype="mac" vendor="TP-Link Technologies"/>
+<hostnames>
+</hostnames>
+<times srtt="1712" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.10" addrtype="ipv4"/>
+<address addr="BC:14:14:F1:81:1B" addrtype="mac" vendor="Brother Industries"/>
+<hostnames>
+</hostnames>
+<times srtt="2210" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.100" addrtype="ipv4"/>
+<address addr="00:11:32:00:01:00" addrtype="mac" vendor="Synology Incorporated"/>
+<hostnames>
+<hostname name="NAS.lan" type="PTR"/>
+</hostnames>
+<times srtt="1406" rttvar="5000" to="100000"/>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.23" addrtype="ipv4"/>
+<address addr="DA:A1:19:00:00:23" addrtype="mac"/>
+<hostnames>
+</hostnames>
+<times srtt="31023" rttvar="31023" to="155115"/>
+</host>
+<host><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="192.168.1.50" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+</host>
+<host><status state="up" reason="arp-response" reason_ttl="0"/>
+<address addr="192.168.1.9" addrtype="ipv4"/>
+<address addr="F0:27:2D:00:00:09" addrtype="mac" vendor="Amazon Technologies"/>
+<hostnames>
+</hostnames>
+<times srtt="8810" rttvar="8810" to="100000"/>
+</host>
+<runstats><finished time="1790000002" timestr="Thu Sep 24 12:00:02 2026" summary="Nmap done at Thu Sep 24 12:00:02 2026; 256 IP addresses (6 hosts up) scanned in 2.05 seconds" elapsed="2.05" exit="success"/><hosts up="6" down="250" total="256"/>
+</runstats>
+</nmaprun>

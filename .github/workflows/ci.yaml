@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Daily, so new hassfest and HACS rules show up before they block a release.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: >-
+          Version bump. "auto" releases only if the integration changed; any
+          other value releases now with that bump.
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+concurrency:
+  # Pushes and manual runs on main share a queue, so two releases never race.
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'schedule' || github.ref }}
+  # Superseded pull request runs are cancelled. Runs on main are not, so a
+  # release is never interrupted halfway.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install ruff (version pinned in requirements_test.txt)
+        run: pip install "$(grep -E '^ruff==' requirements_test.txt)"
+      - run: ruff check --output-format=github .
+
+  tests:
+    name: Tests (integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements_test.txt
+      - run: pip install -r requirements_test.txt
+      - run: pytest --cov --cov-report=term-missing
+
+  card:
+    name: Tests (dashboard card)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  hassfest:
+    name: hassfest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    name: HACS validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hacs/action@main
+        with:
+          category: integration
+
+  release:
+    name: Release
+    # HACS validation is left out on purpose: it checks store-listing rules
+    # (repository settings, topics), not whether the integration works.
+    needs: [lint, tests, card, hassfest]
+    # Pull requests get a preview of the release notes in the job summary.
+    # Only a push to main, or a manual run on main, publishes.
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # A pull request's own head, not GitHub's merge commit, so its
+          # commits show up in the preview.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Plan the release
+        id: plan
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: >-
+          python scripts/release.py --bump "$BUMP"
+          --notes-file "$RUNNER_TEMP/release-notes.md" --write-manifest
+      - name: Publish the release
+        if: >-
+          steps.plan.outputs.release == 'true'
+          && github.ref == 'refs/heads/main'
+          && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          # Release only the newest commit on main. If main has moved on, the
+          # run for the newer commit releases these changes along with its own.
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$GITHUB_SHA" ]; then
+            echo "::notice::main has moved past ${GITHUB_SHA::7}; the run for the newer commit will release."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # manifest.json (the version Home Assistant shows) is kept in step
+          # with the tag (the version HACS shows).
+          if ! git diff --quiet; then
+            git commit --all --message "Release $VERSION"
+          fi
+          git tag --annotate "$VERSION" --message "Release $VERSION"
+          git push --atomic origin "HEAD:refs/heads/main" "refs/tags/$VERSION"
+          gh release create "$VERSION" --title "$VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag

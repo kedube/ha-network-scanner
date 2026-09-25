@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Scan one or more IP ranges with nmap and list the devices that answer. nmap needs root or the CAP_NET_RAW capability to read MAC addresses.",
+        "data": {
+          "ip_range": "IP range",
+          "mac_mappings": "MAC address mappings",
+          "scan_interval": "Scan interval"
+        },
+        "data_description": {
+          "ip_range": "One or more nmap targets separated by spaces, e.g. `192.168.1.0/24` or `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "One device per line: `mac;name;manufacturer`. The manufacturer is optional. Lines starting with `#` are ignored.",
+          "scan_interval": "Minutes between scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Enter at least one nmap target such as `192.168.1.0/24` or `192.168.1.1-254`.",
+      "invalid_mac_mappings": "Line {line} is not a valid mapping. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`.",
+      "nmap_unavailable": "The nmap binary could not be found or executed. Install nmap where Home Assistant runs."
+    },
+    "abort": {
+      "already_configured": "This IP range is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Network Scanner options",
+        "description": "Changes take effect immediately; the integration reloads and runs a fresh scan.",
+        "data": {
+          "mac_mappings": "MAC address mappings",
+          "scan_interval": "Scan interval"
+        },
+        "data_description": {
+          "mac_mappings": "One device per line: `mac;name;manufacturer`. The manufacturer is optional. Lines starting with `#` are ignored.",
+          "scan_interval": "Minutes between scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "Line {line} is not a valid mapping. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`."
+    }
+  }
+}

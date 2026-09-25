@@ -1,0 +1,4 @@
+# Test and lint dependencies. The pytest plugin pins a matching homeassistant.
+pytest-homeassistant-custom-component==0.13.316
+python-nmap==0.7.1
+ruff==0.16.8
