@@ -188,8 +188,8 @@ max_height: 480px
 
 The card has no version of its own: it always comes from the integration release you have installed, so there is nothing to update or match up separately.
 
-- Its address includes the integration's version (for example `/network_scanner/network-scanner-card.js?v=2.1.0`), so every update gives it a new address and browsers can't keep using a cached older card.
-- To see which version a page loaded, open the browser's developer console and look for `NETWORK-SCANNER-CARD v2.1.0`. The integration's own version is on its device page under **Settings > Devices & services > Network Scanner**.
+- Its address includes the integration's version (for example `/network_scanner/network-scanner-card.js?v=2.3`), so every update gives it a new address and browsers can't keep using a cached older card.
+- To see which version a page loaded, open the browser's developer console and look for `NETWORK-SCANNER-CARD v2.3`. The integration's own version is on its device page under **Settings > Devices & services > Network Scanner**.
 - If a page was left open during an update, the card shows a notice that it's from a different release, with a **Refresh** button that loads the matching one.
 
 ## The sensor

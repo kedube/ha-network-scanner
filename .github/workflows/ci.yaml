@@ -12,9 +12,11 @@ on:
       bump:
         description: >-
           Version bump. "auto" releases only if the integration changed; any
-          other value releases now with that bump.
+          other value releases now with that bump. minor goes to the next
+          tenth (2.3 to 2.4, 2.9 to 3.0); major goes to the next whole
+          number (2.3 to 3.0).
         type: choice
-        options: [auto, patch, minor, major]
+        options: [auto, minor, major]
         default: auto
 
 permissions:

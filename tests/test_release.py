@@ -83,6 +83,7 @@ def test_classify_pull_request_merge_uses_its_title() -> None:
     "commit",
     [
         Commit("sha", "Release 2.1.0"),
+        Commit("sha", "Release 2.3"),
         Commit("sha", "Merge branch 'main' of github.com:kedube/ha-network-scanner"),
         Commit("sha", "Merge pull request #3 from someone/branch", ""),
     ],
@@ -133,10 +134,10 @@ def test_breaking_changes(commit: Commit) -> None:
 @pytest.mark.parametrize(
     ("subjects", "level", "version"),
     [
-        (["Fix a crash"], "patch", "1.3.1"),
-        (["Fix a crash", "Add a card"], "minor", "1.4.0"),
-        (["Fix a crash", ("Rework entries", "BREAKING CHANGE: re-add it")], "major", "2.0.0"),
-        (["refactor: tidy the scanner"], "patch", "1.3.1"),
+        (["Fix a crash"], "minor", "1.4"),
+        (["Fix a crash", "Add a card"], "minor", "1.4"),
+        (["Fix a crash", ("Rework entries", "BREAKING CHANGE: re-add it")], "major", "2.0"),
+        (["refactor: tidy the scanner"], "minor", "1.4"),
     ],
 )
 def test_bump_level_follows_the_biggest_change(subjects, level: str, version: str) -> None:
@@ -144,20 +145,38 @@ def test_bump_level_follows_the_biggest_change(subjects, level: str, version: st
     assert (result.release, result.level, result.version) == (True, level, version)
 
 
+@pytest.mark.parametrize(
+    ("last", "level", "expected"),
+    [
+        # From the last major.minor.patch release to the major.minor scheme.
+        ("2.2.1", "minor", "2.3"),
+        ("2.3", "minor", "2.4"),
+        ("2.9", "minor", "3.0"),
+        ("3.9", "minor", "4.0"),
+        ("2.9.5", "minor", "3.0"),
+        ("2.3", "major", "3.0"),
+        ("2.9", "major", "3.0"),
+    ],
+)
+def test_counts_up_by_tenths(last: str, level: str, expected: str) -> None:
+    release_version = release.bump(release.parse_version(last), level)
+    assert release.format_version(release_version) == expected
+
+
 def test_counts_up_from_the_manifest_that_was_released() -> None:
-    """Tag 1.3.0 shipped manifest 2.0.0; the next release must not reuse 2.0.0."""
-    assert plan("Adding Network Scanner card", released="2.0.0", head="2.0.0").version == "2.1.0"
+    """Tag 1.3.0 shipped manifest 2.0.0; the next release must not reuse 2.0."""
+    assert plan("Adding Network Scanner card", released="2.0.0", head="2.0.0").version == "2.1"
 
 
 def test_keeps_a_version_raised_by_hand() -> None:
-    assert plan("Fix a crash", head="3.0.0").version == "3.0.0"
+    assert plan("Fix a crash", head="3.0").version == "3.0"
     # ...but not one below what the commits call for.
-    assert plan("Add a card", head="1.3.1").version == "1.4.0"
+    assert plan("Add a card", head="1.3.1").version == "1.4"
 
 
 def test_first_release_uses_the_manifest() -> None:
-    result = plan("Add everything", last_tag=None, released=None, head="0.1.0")
-    assert (result.release, result.version) == (True, "0.1.0")
+    result = plan("Add everything", last_tag=None, released=None, head="0.1")
+    assert (result.release, result.version) == (True, "0.1")
     assert "Full changelog" not in result.notes
 
 
@@ -176,8 +195,8 @@ def test_no_release_without_commits() -> None:
 
 
 def test_forced_level_releases_anyway() -> None:
-    result = plan("docs: README", changed=["README.md"], forced_level="patch")
-    assert (result.release, result.version) == (True, "1.3.1")
+    result = plan("docs: README", changed=["README.md"], forced_level="minor")
+    assert (result.release, result.version) == (True, "1.4")
 
 
 @pytest.mark.parametrize(
@@ -185,6 +204,9 @@ def test_forced_level_releases_anyway() -> None:
     [
         (["1.2.0", "1.10.0", "1.3.0", "not-a-version"], "1.10.0"),
         (["v2.0.0", "1.9.9"], "v2.0.0"),
+        # Both schemes side by side.
+        (["2.2.1", "2.3", "2.2.0"], "2.3"),
+        (["2.2.1", "2.2"], "2.2.1"),
         ([], None),
     ],
 )
@@ -214,7 +236,7 @@ def test_release_notes() -> None:
         "- Fix native_value never surfacing as sensor state\n\n"
         "### 🔧 Other changes\n\n"
         "- Modify nmap scan arguments\n\n"
-        "**Full changelog**: https://github.com/kedube/ha-network-scanner/compare/1.3.0...2.0.0\n"
+        "**Full changelog**: https://github.com/kedube/ha-network-scanner/compare/1.3.0...2.0\n"
     )
 
 
@@ -273,19 +295,19 @@ def test_main_end_to_end(repo: Path, tmp_path_factory: pytest.TempPathFactory, m
 
     assert release.main(["--notes-file", str(out / "notes.md"), "--write-manifest"]) == 0
 
-    assert (out / "output").read_text() == "release=true\nversion=1.1.0\nlevel=minor\n"
+    assert (out / "output").read_text() == "release=true\nversion=1.1\nlevel=minor\n"
     assert (out / "notes.md").read_text() == (
         "### ✨ Enhancements\n\n"
         "- Add a last_scan attribute\n\n"
         "### 🐛 Fixes\n\n"
         "- Fix card layout on phones (#9)\n\n"
-        "**Full changelog**: https://github.com/kedube/ha-network-scanner/compare/1.0.0...1.1.0\n"
+        "**Full changelog**: https://github.com/kedube/ha-network-scanner/compare/1.0.0...1.1\n"
     )
-    assert "## Next release: 1.1.0" in (out / "summary").read_text()
+    assert "## Next release: 1.1" in (out / "summary").read_text()
     # Only the version string changed; the inline list kept its layout.
     manifest = (repo / release.MANIFEST).read_text()
     assert '"dependencies": ["frontend", "http"]' in manifest
-    assert json.loads(manifest)["version"] == "1.1.0"
+    assert json.loads(manifest)["version"] == "1.1"
 
 
 def test_main_without_shipped_changes(repo: Path, tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:

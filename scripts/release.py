@@ -9,11 +9,11 @@ push to main has passed. It also runs locally, to preview the next release:
 Rules
   * Only changes to what HACS installs (custom_components/ or hacs.json) cause
     a release. Docs, test and CI changes go out with the next one.
-  * The version bump comes from the commit messages since the last release:
-      major  "BREAKING CHANGE" in a message, or "!" after a Conventional
-             Commits type ("feat!: drop the old YAML options")
-      minor  any enhancement
-      patch  anything else
+  * Versions are major.minor, and each release counts up by one tenth:
+    2.3, 2.4, ... 2.9, 3.0. A breaking change skips ahead to the next major
+    (2.4 to 3.0): "BREAKING CHANGE" in a message, or "!" after a Conventional
+    Commits type ("feat!: drop the old YAML options"). Tags from before this
+    scheme, such as 2.2.1, still count as the last release.
   * Each commit lands in a section of the release notes. A commit that
     changes nothing HACS installs is left out, whatever its message says. For
     the rest, a Conventional Commits type decides when there is one (feat and
@@ -57,17 +57,19 @@ SECTIONS = (
     (OTHER, "🔧 Other changes"),
 )
 
-LEVELS = ("patch", "minor", "major")
+LEVELS = ("minor", "major")
 
+# (major, minor, patch). Only versions from before the major.minor scheme
+# have a patch; it orders them, and new versions leave it out.
 Version = tuple[int, int, int]
 
-_VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
+_VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)(?:\.(\d+))?$")
 _CONVENTIONAL_RE = re.compile(
     r"^(?P<type>[a-zA-Z]+)(?:\((?P<scope>[^)]*)\))?(?P<bang>!)?:\s*(?P<text>.+)$"
 )
 _PR_MERGE_RE = re.compile(r"^Merge pull request #(?P<number>\d+) from \S+")
 _OTHER_MERGE_RE = re.compile(r"^Merge (branch|remote-tracking branch|tag) ")
-_RELEASE_RE = re.compile(r"^Release v?\d+\.\d+\.\d+$")
+_RELEASE_RE = re.compile(r"^Release v?\d+\.\d+(\.\d+)?$")
 _BULLET_RE = re.compile(r"^\s*[-*•]\s+(?P<text>\S.*)$")
 _BREAKING_RE = re.compile(r"\bBREAKING[ -]CHANGES?\b")
 
@@ -130,21 +132,20 @@ class Plan:
 
 def parse_version(text: str | None) -> Version | None:
     match = _VERSION_RE.match((text or "").strip())
-    return (int(match[1]), int(match[2]), int(match[3])) if match else None
+    return (int(match[1]), int(match[2]), int(match[3] or 0)) if match else None
 
 
 def format_version(version: Version) -> str:
-    return ".".join(str(part) for part in version)
+    major, minor, _ = version
+    return f"{major}.{minor}"
 
 
 def bump(version: Version, level: str) -> Version:
-    major, minor, patch = version
-    if level == "major":
+    major, minor, _ = version
+    if level == "major" or (level == "minor" and minor >= 9):
         return (major + 1, 0, 0)
     if level == "minor":
         return (major, minor + 1, 0)
-    if level == "patch":
-        return (major, minor, patch + 1)
     raise ValueError(f"Unknown bump level {level!r}")
 
 
@@ -220,11 +221,7 @@ def classify(commit: Commit) -> Change | None:
 
 
 def bump_level(changes: Sequence[Change]) -> str:
-    if any(change.breaking for change in changes):
-        return "major"
-    if any(change.category == ENHANCEMENT for change in changes):
-        return "minor"
-    return "patch"
+    return "major" if any(change.breaking for change in changes) else "minor"
 
 
 # ---------------------------------------------------------------- notes

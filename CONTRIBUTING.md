@@ -71,7 +71,7 @@ Releases are automatic. After lint, both test suites and hassfest pass on a push
 
 1. decides whether there is anything to release. Only changes to what HACS installs count: `custom_components/` and `hacs.json`. A push that only touches docs, tests or CI doesn't release; those changes go out with the next release.
 2. works out the next version from the commit messages since the last release (see below).
-3. sets that version in `manifest.json`, commits it to `main` as **Release x.y.z**, and tags that commit. The tag is the version HACS shows and the manifest is the version Home Assistant shows, so they always match.
+3. sets that version in `manifest.json`, commits it to `main` as **Release x.y**, and tags that commit. The tag is the version HACS shows and the manifest is the version Home Assistant shows, so they always match.
 4. publishes a GitHub release. The release notes are generated from the same commit messages, and HACS shows them to users before they update.
 
 Because the release commit goes onto `main`, run `git pull` before your next push.
@@ -86,14 +86,16 @@ To preview the next release at any time, run:
 
 ### Writing commit messages
 
-The first line of each commit becomes a line in the release notes, so write it for someone using the integration. The type of change also decides the version bump:
+The first line of each commit becomes a line in the release notes, so write it for someone using the integration.
 
-| Change | Version bump | Release notes section | How it's recognized |
-|--------|--------------|-----------------------|---------------------|
-| Breaking | major (3.0.0) | ⚠️ Breaking changes | `BREAKING CHANGE:` in the message, or `!` after the type: `feat!: …` |
-| Enhancement | minor (2.3.0) | ✨ Enhancements | `feat:` or `perf:`, or a message like "Add …", "Support …", "Improve …", "Performance …" |
-| Fix | patch (2.2.1) | 🐛 Fixes | `fix:`, or a message like "Fix …", "Restore …", "Correct …" |
-| Anything else | patch | 🔧 Other changes | any other message |
+Versions are `major.minor`, and each release counts up by one tenth: 2.3, 2.4, and so on to 2.9, then 3.0. Only a breaking change alters that, skipping ahead to the next major version. The type of change decides where it goes in the release notes:
+
+| Change | Next version after 2.4 | Release notes section | How it's recognized |
+|--------|------------------------|-----------------------|---------------------|
+| Breaking | 3.0 | ⚠️ Breaking changes | `BREAKING CHANGE:` in the message, or `!` after the type: `feat!: …` |
+| Enhancement | 2.5 | ✨ Enhancements | `feat:` or `perf:`, or a message like "Add …", "Support …", "Improve …", "Performance …" |
+| Fix | 2.5 | 🐛 Fixes | `fix:`, or a message like "Fix …", "Restore …", "Correct …" |
+| Anything else | 2.5 | 🔧 Other changes | any other message |
 | Maintenance | none of its own | left out | `docs:`, `test:`, `ci:`, `build:`, `chore:`, `refactor:`, `style:`, or any commit that changes nothing HACS installs |
 
 [Conventional Commits](https://www.conventionalcommits.org/) prefixes are the most reliable, but plain messages work too. A scope is shown in bold: `fix(card): keep rows open across scans` becomes "**card:** Keep rows open across scans".
@@ -111,7 +113,7 @@ Add a dashboard card
 
 ### Releasing by hand
 
-- **Release now, or pick the bump yourself:** go to **Actions > CI > Run workflow** on `main` and choose `patch`, `minor` or `major`. That releases even if only docs changed.
-- **Jump to a specific version:** set `version` in [manifest.json](custom_components/network_scanner/manifest.json) in your commit. If it's higher than the version the commits call for, the release uses it.
+- **Release now, or pick the bump yourself:** go to **Actions > CI > Run workflow** on `main` and choose `minor` (the next tenth, such as 2.4 to 2.5) or `major` (the next whole number, such as 2.4 to 3.0). That releases even if only docs changed.
+- **Jump to a specific version:** set `version` in [manifest.json](custom_components/network_scanner/manifest.json) in your commit, in the same `major.minor` form, such as `3.0`. If it's higher than the version the commits call for, the release uses it.
 
 Don't otherwise edit the version in `manifest.json`. The release job owns it.

@@ -153,3 +153,4 @@ cython_debug/
 
 # Card test dependencies
 node_modules/
+.DS_Store
