@@ -31,10 +31,17 @@ class NetworkScannerSensor(CoordinatorEntity[NetworkScannerCoordinator], SensorE
     view: no async_update, no blocking work.
     """
 
-    # Name is intentionally not device-prefixed (has_entity_name stays False)
-    # so a fresh install still gets `sensor.network_scanner`, which the README
-    # dashboard examples rely on.
-    _attr_name = "Network Scanner"
+    # The sensor is the device's main feature, so it takes the device's name,
+    # "Network Scanner (<range>)". Since Home Assistant 2026.9 every entity
+    # that belongs to a device is named after it, so a name of its own would
+    # read "Network Scanner (<range>) Network Scanner".
+    _attr_has_entity_name = True
+    _attr_name = None
+    # A fresh install gets `sensor.network_scanner` (then `_2` and so on for
+    # more ranges), which the README dashboard examples rely on. An ID derived
+    # from the name would include the range; a suggested entity_id is used as
+    # is. Existing installs keep whatever ID the entity registry already holds.
+    entity_id = "sensor.network_scanner"
     _attr_icon = "mdi:lan"
     _attr_native_unit_of_measurement = "Devices"
     _attr_state_class = SensorStateClass.MEASUREMENT

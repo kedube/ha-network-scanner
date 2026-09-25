@@ -73,7 +73,7 @@ function scannerState(devices = DEVICES, overrides = {}) {
     last_updated: new Date().toISOString(),
     ...overrides,
     attributes: {
-      friendly_name: "Network Scanner",
+      friendly_name: "Network Scanner (192.168.1.0/24)",
       unit_of_measurement: "Devices",
       ip_range: "192.168.1.0/24",
       last_scan: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
@@ -311,7 +311,7 @@ describe("device list", () => {
   test("header shows the range and when the network was last scanned", (t) => {
     const window = loadCard(t);
     const card = mount(window);
-    assert.equal(text($(card, ".title")), "Network Scanner");
+    assert.equal(text($(card, ".title")), "Network Scanner (192.168.1.0/24)");
     assert.equal(text($(card, ".subtitle")), "192.168.1.0/24 · Scanned 3 minutes ago");
   });
 

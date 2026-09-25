@@ -12,13 +12,14 @@ Everything that ships is in [custom_components/network_scanner](custom_component
 - `scanner.py`: the nmap client, with no Home Assistant imports. Ping sweep (`-sn`), MAC and vendor extraction, bounded parallel reverse DNS, and MAC mapping parsing.
 - `sensor.py`: the sensor entity. Its state is the device count, and its attributes are `devices`, `ip_range` and `last_scan`. `devices` and `last_scan` are excluded from the recorder. Its device reports the integration version, which the card checks itself against.
 - `frontend/network-scanner-card.js`: the dashboard card, a dependency-free custom element shipped as-is with no build step.
+- `brand/`: the integration's icon, light and dark at 1x and 2x, which Home Assistant 2026.3 and later serve from here. The same files are in the [brands repository](https://github.com/home-assistant/brands/tree/master/custom_integrations/network_scanner) for older versions and for HACS.
 
 ## Running the tests
 
-The integration's tests use [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component), which pins a matching Home Assistant version. You need Python 3.13.
+The integration's tests use [pytest-homeassistant-custom-component](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component), which pins a matching Home Assistant version. You need Python 3.14.
 
 ```sh
-python3.13 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements_test.txt
 

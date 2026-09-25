@@ -17,7 +17,11 @@ from pytest_homeassistant_custom_component.common import (
     async_fire_time_changed,
 )
 
-from custom_components.network_scanner.const import CONF_SCAN_INTERVAL, DOMAIN
+from custom_components.network_scanner.const import (
+    CONF_IP_RANGE,
+    CONF_SCAN_INTERVAL,
+    DOMAIN,
+)
 
 from .common import (
     ENTITY_ID,
@@ -52,7 +56,7 @@ async def test_state_and_attributes(hass: HomeAssistant, init_integration: MockC
     assert state.attributes["unit_of_measurement"] == "Devices"
     assert state.attributes["state_class"] == SensorStateClass.MEASUREMENT
     assert state.attributes["icon"] == "mdi:lan"
-    assert state.attributes["friendly_name"] == "Network Scanner"
+    assert state.attributes["friendly_name"] == f"Network Scanner ({IP_RANGE})"
 
 
 async def test_registry_entries(
@@ -72,6 +76,27 @@ async def test_registry_entries(
     assert device.entry_type is dr.DeviceEntryType.SERVICE
     # The dashboard card compares its own version against this.
     assert device.sw_version == INTEGRATION_VERSION
+
+
+async def test_each_range_gets_its_own_sensor(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    entity_registry: er.EntityRegistry,
+) -> None:
+    """The entity ID leaves out the range, as the README promises."""
+    second = MockConfigEntry(
+        domain=DOMAIN, version=2, unique_id="10.0.0.0/24", data={CONF_IP_RANGE: "10.0.0.0/24"}
+    )
+    second.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(second.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert entity_registry.async_get_entity_id(
+        "sensor", DOMAIN, "network_scanner_10.0.0.0/24"
+    ) == f"{ENTITY_ID}_2"
+    assert hass.states.get(f"{ENTITY_ID}_2").attributes["friendly_name"] == (
+        "Network Scanner (10.0.0.0/24)"
+    )
 
 
 async def test_empty_network(
