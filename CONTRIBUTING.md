@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping out. This page covers the code layout, running the tests, the README screenshots, what CI checks, and how releases are made.
+Thanks for helping out. This page covers the code layout, running the tests, translations, the README screenshots, what CI checks, and how releases are made.
 
 ## Code layout
 
@@ -11,7 +11,8 @@ Everything that ships is in [custom_components/network_scanner](custom_component
 - `coordinator.py`: a `TimestampDataUpdateCoordinator` that runs the blocking scan in the executor on the configured interval and records when the last successful scan finished.
 - `scanner.py`: the nmap client, with no Home Assistant imports. Ping sweep (`-sn`), MAC and vendor extraction, bounded parallel reverse DNS, and MAC mapping parsing.
 - `sensor.py`: the sensor entity. Its state is the device count, and its attributes are `devices`, `ip_range` and `last_scan`. `devices` and `last_scan` are excluded from the recorder. Its device reports the integration version, which the card checks itself against.
-- `frontend/network-scanner-card.js`: the dashboard card, a dependency-free custom element shipped as-is with no build step.
+- `strings.json` and `translations/`: the text of the setup and options dialogs, and of the message shown when nmap is missing. `translations/en.json` is a copy of `strings.json`.
+- `frontend/network-scanner-card.js`: the dashboard card, a dependency-free custom element shipped as-is with no build step. Its text is in `TRANSLATIONS` at the end of the file.
 - `brand/`: the integration's icon, light and dark at 1x and 2x, which Home Assistant 2026.3 and later serve from here. The same files are in the [brands repository](https://github.com/home-assistant/brands/tree/master/custom_integrations/network_scanner) for older versions and for HACS.
 
 ## Running the tests
@@ -38,6 +39,15 @@ npm test
 ```
 
 Both test suites use [tests/fixtures/sweep_devices.json](tests/fixtures/sweep_devices.json): the Python tests check that the integration produces exactly that device list, and the card tests render it. If you change what the sensor reports, update that file and both suites follow.
+
+## Translations
+
+The integration and the card come in the same languages, and the tests keep them that way. English is the reference for both.
+
+- **Changing or adding text:** change the English in `strings.json` (then copy it to `translations/en.json`) or in the card's `TRANSLATIONS.en`, and the same key in every other language.
+- **Adding a language:** add `translations/<code>.json` and a `<code>` entry in the card's `TRANSLATIONS`, using Home Assistant's language code, such as `pt-BR` or `zh-Hant`. The card shows a regional variant (`de-CH`) in its base language (`de`), but the setup dialogs don't: Home Assistant falls back from a missing language straight to English.
+
+Both test suites fail if a language is missing a string, has one English doesn't, or changes a `{placeholder}`, and the card's tests also fail if the card and the integration list different languages.
 
 ## README screenshots
 

@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Dodaj sieć"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Skanuje jeden lub więcej zakresów IP za pomocą nmap i wyświetla urządzenia, które odpowiadają. nmap wymaga uprawnień roota lub uprawnienia CAP_NET_RAW, aby odczytywać adresy MAC.",
+        "data": {
+          "ip_range": "Zakres IP",
+          "mac_mappings": "Mapowania adresów MAC",
+          "scan_interval": "Interwał skanowania"
+        },
+        "data_description": {
+          "ip_range": "Jeden lub więcej celów nmap oddzielonych spacjami, np. `192.168.1.0/24` lub `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Jedno urządzenie na wiersz: `mac;nazwa;producent`. Producent jest opcjonalny. Wiersze zaczynające się od `#` są pomijane.",
+          "scan_interval": "Liczba minut między skanowaniami."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Wpisz co najmniej jeden cel nmap, np. `192.168.1.0/24` lub `192.168.1.1-254`.",
+      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`.",
+      "nmap_unavailable": "Nie znaleziono programu nmap lub nie można go uruchomić. Zainstaluj nmap tam, gdzie działa Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Ten zakres IP jest już skonfigurowany."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje Network Scanner",
+        "description": "Zmiany obowiązują od razu: integracja zostanie przeładowana i wykona nowe skanowanie.",
+        "data": {
+          "mac_mappings": "Mapowania adresów MAC",
+          "scan_interval": "Interwał skanowania"
+        },
+        "data_description": {
+          "mac_mappings": "Jedno urządzenie na wiersz: `mac;nazwa;producent`. Producent jest opcjonalny. Wiersze zaczynające się od `#` są pomijane.",
+          "scan_interval": "Liczba minut między skanowaniami."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap jest niedostępny: {error}"
+    }
+  }
+}

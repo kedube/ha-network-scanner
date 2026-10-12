@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Ajouter un réseau"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Analysez une ou plusieurs plages d'adresses IP avec nmap et listez les appareils qui répondent. nmap a besoin des droits root ou de la capacité CAP_NET_RAW pour lire les adresses MAC.",
+        "data": {
+          "ip_range": "Plage d'adresses IP",
+          "mac_mappings": "Correspondances d'adresses MAC",
+          "scan_interval": "Intervalle d'analyse"
+        },
+        "data_description": {
+          "ip_range": "Une ou plusieurs cibles nmap séparées par des espaces, par exemple `192.168.1.0/24` ou `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Un appareil par ligne : `mac;nom;fabricant`. Le fabricant est facultatif. Les lignes commençant par `#` sont ignorées.",
+          "scan_interval": "Minutes entre deux analyses."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Saisissez au moins une cible nmap, par exemple `192.168.1.0/24` ou `192.168.1.1-254`.",
+      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`.",
+      "nmap_unavailable": "Le programme nmap est introuvable ou n'a pas pu être exécuté. Installez nmap là où Home Assistant s'exécute."
+    },
+    "abort": {
+      "already_configured": "Cette plage d'adresses IP est déjà configurée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de Network Scanner",
+        "description": "Les modifications s'appliquent immédiatement : l'intégration se recharge et lance une nouvelle analyse.",
+        "data": {
+          "mac_mappings": "Correspondances d'adresses MAC",
+          "scan_interval": "Intervalle d'analyse"
+        },
+        "data_description": {
+          "mac_mappings": "Un appareil par ligne : `mac;nom;fabricant`. Le fabricant est facultatif. Les lignes commençant par `#` sont ignorées.",
+          "scan_interval": "Minutes entre deux analyses."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap n'est pas disponible : {error}"
+    }
+  }
+}

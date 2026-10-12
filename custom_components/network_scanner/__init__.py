@@ -182,7 +182,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: NetworkScannerConfigEntr
         client = await hass.async_add_executor_job(NetworkScannerClient, ip_range, mapping)
     except NmapUnavailableError as err:
         # Permanent until the host is fixed; no point retrying every minute.
-        raise ConfigEntryError(f"nmap is not available: {err}") from err
+        # Translated, because Home Assistant shows it on the integration's card.
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="nmap_unavailable",
+            translation_placeholders={"error": str(err)},
+        ) from err
 
     coordinator = NetworkScannerCoordinator(hass, entry, client, scan_interval)
     entry.runtime_data = coordinator

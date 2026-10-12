@@ -34,6 +34,7 @@ See every device on your home network in Home Assistant. Network Scanner finds d
 - **Spots strangers:** see at a glance which devices aren't in your mappings yet, and which use private (randomized) MAC addresses.
 - **Set up in the UI,** with a configurable scan interval (every 15 minutes by default). Mappings and the interval can be changed at any time.
 - **Automation friendly:** a sensor with the device count and the full device list, ready for templates, automations and history graphs.
+- **In your language:** the setup dialogs and the card are in English, German, French, Dutch, Chinese (Simplified), Italian, Spanish, Polish and Swedish. The card follows the language in your Home Assistant profile.
 - **Local only:** no cloud service and no account.
 
 ## Quick start

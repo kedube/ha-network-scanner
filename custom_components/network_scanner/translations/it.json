@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Aggiungi rete"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Scansiona uno o più intervalli IP con nmap ed elenca i dispositivi che rispondono. nmap richiede i privilegi di root o la capability CAP_NET_RAW per leggere gli indirizzi MAC.",
+        "data": {
+          "ip_range": "Intervallo IP",
+          "mac_mappings": "Associazioni degli indirizzi MAC",
+          "scan_interval": "Intervallo di scansione"
+        },
+        "data_description": {
+          "ip_range": "Uno o più target nmap separati da spazi, ad es. `192.168.1.0/24` o `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Un dispositivo per riga: `mac;nome;produttore`. Il produttore è facoltativo. Le righe che iniziano con `#` vengono ignorate.",
+          "scan_interval": "Minuti tra una scansione e l'altra."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Inserisci almeno un target nmap, ad esempio `192.168.1.0/24` o `192.168.1.1-254`.",
+      "invalid_mac_mappings": "La riga {line} non è un'associazione valida. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`.",
+      "nmap_unavailable": "Impossibile trovare o eseguire il programma nmap. Installa nmap dove è in esecuzione Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Questo intervallo IP è già configurato."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni di Network Scanner",
+        "description": "Le modifiche hanno effetto immediato: l'integrazione si ricarica ed esegue una nuova scansione.",
+        "data": {
+          "mac_mappings": "Associazioni degli indirizzi MAC",
+          "scan_interval": "Intervallo di scansione"
+        },
+        "data_description": {
+          "mac_mappings": "Un dispositivo per riga: `mac;nome;produttore`. Il produttore è facoltativo. Le righe che iniziano con `#` vengono ignorate.",
+          "scan_interval": "Minuti tra una scansione e l'altra."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "La riga {line} non è un'associazione valida. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap non è disponibile: {error}"
+    }
+  }
+}

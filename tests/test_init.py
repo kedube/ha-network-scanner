@@ -52,6 +52,9 @@ async def test_setup_fails_without_nmap(
     # A permanent error: Home Assistant won't keep retrying a missing binary.
     assert mock_config_entry.state is ConfigEntryState.SETUP_ERROR
     assert hass.states.get(ENTITY_ID) is None
+    # The frontend shows the reason in the user's language from this key.
+    assert mock_config_entry.error_reason_translation_key == "nmap_unavailable"
+    assert mock_config_entry.reason.startswith("nmap is not available: ")
 
 
 async def test_first_scan_does_not_block_setup(

@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Netwerk toevoegen"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Scan een of meer IP-bereiken met nmap en toon de apparaten die antwoorden. nmap heeft rootrechten of de capability CAP_NET_RAW nodig om MAC-adressen uit te lezen.",
+        "data": {
+          "ip_range": "IP-bereik",
+          "mac_mappings": "MAC-adreskoppelingen",
+          "scan_interval": "Scaninterval"
+        },
+        "data_description": {
+          "ip_range": "Een of meer nmap-doelen, gescheiden door spaties, bijv. `192.168.1.0/24` of `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Eén apparaat per regel: `mac;naam;fabrikant`. De fabrikant is optioneel. Regels die met `#` beginnen, worden genegeerd.",
+          "scan_interval": "Minuten tussen scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Voer ten minste één nmap-doel in, zoals `192.168.1.0/24` of `192.168.1.1-254`.",
+      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`.",
+      "nmap_unavailable": "Het programma nmap is niet gevonden of kon niet worden uitgevoerd. Installeer nmap op de plek waar Home Assistant draait."
+    },
+    "abort": {
+      "already_configured": "Dit IP-bereik is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opties voor Network Scanner",
+        "description": "Wijzigingen gaan direct in: de integratie wordt opnieuw geladen en voert een nieuwe scan uit.",
+        "data": {
+          "mac_mappings": "MAC-adreskoppelingen",
+          "scan_interval": "Scaninterval"
+        },
+        "data_description": {
+          "mac_mappings": "Eén apparaat per regel: `mac;naam;fabrikant`. De fabrikant is optioneel. Regels die met `#` beginnen, worden genegeerd.",
+          "scan_interval": "Minuten tussen scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap is niet beschikbaar: {error}"
+    }
+  }
+}

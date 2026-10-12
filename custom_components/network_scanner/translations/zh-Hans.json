@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "添加网络"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "使用 nmap 扫描一个或多个 IP 范围，并列出有响应的设备。nmap 需要 root 权限或 CAP_NET_RAW 能力才能读取 MAC 地址。",
+        "data": {
+          "ip_range": "IP 范围",
+          "mac_mappings": "MAC 地址映射",
+          "scan_interval": "扫描间隔"
+        },
+        "data_description": {
+          "ip_range": "一个或多个 nmap 目标，以空格分隔，例如 `192.168.1.0/24` 或 `192.168.1.1-254 10.0.0.0/24`。",
+          "mac_mappings": "每行一个设备：`mac;名称;制造商`。制造商可选。以 `#` 开头的行会被忽略。",
+          "scan_interval": "两次扫描之间的分钟数。"
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "请输入至少一个 nmap 目标，例如 `192.168.1.0/24` 或 `192.168.1.1-254`。",
+      "invalid_mac_mappings": "第 {line} 行不是有效的映射。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。",
+      "nmap_unavailable": "找不到或无法运行 nmap 程序。请在运行 Home Assistant 的系统上安装 nmap。"
+    },
+    "abort": {
+      "already_configured": "此 IP 范围已配置。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Network Scanner 选项",
+        "description": "更改会立即生效：集成将重新加载并执行一次新的扫描。",
+        "data": {
+          "mac_mappings": "MAC 地址映射",
+          "scan_interval": "扫描间隔"
+        },
+        "data_description": {
+          "mac_mappings": "每行一个设备：`mac;名称;制造商`。制造商可选。以 `#` 开头的行会被忽略。",
+          "scan_interval": "两次扫描之间的分钟数。"
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "第 {line} 行不是有效的映射。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。"
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap 不可用：{error}"
+    }
+  }
+}

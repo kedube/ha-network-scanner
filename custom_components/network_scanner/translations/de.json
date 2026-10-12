@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Netzwerk hinzufügen"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Scanne einen oder mehrere IP-Bereiche mit nmap und liste die Geräte auf, die antworten. nmap benötigt Root-Rechte oder die Capability CAP_NET_RAW, um MAC-Adressen auszulesen.",
+        "data": {
+          "ip_range": "IP-Bereich",
+          "mac_mappings": "MAC-Adresszuordnungen",
+          "scan_interval": "Scanintervall"
+        },
+        "data_description": {
+          "ip_range": "Ein oder mehrere nmap-Ziele, durch Leerzeichen getrennt, z. B. `192.168.1.0/24` oder `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Ein Gerät pro Zeile: `mac;name;hersteller`. Der Hersteller ist optional. Zeilen, die mit `#` beginnen, werden ignoriert.",
+          "scan_interval": "Minuten zwischen zwei Scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Gib mindestens ein nmap-Ziel ein, z. B. `192.168.1.0/24` oder `192.168.1.1-254`.",
+      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`.",
+      "nmap_unavailable": "Das Programm nmap wurde nicht gefunden oder konnte nicht ausgeführt werden. Installiere nmap dort, wo Home Assistant läuft."
+    },
+    "abort": {
+      "already_configured": "Dieser IP-Bereich ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen für Network Scanner",
+        "description": "Änderungen werden sofort wirksam: Die Integration wird neu geladen und führt einen neuen Scan durch.",
+        "data": {
+          "mac_mappings": "MAC-Adresszuordnungen",
+          "scan_interval": "Scanintervall"
+        },
+        "data_description": {
+          "mac_mappings": "Ein Gerät pro Zeile: `mac;name;hersteller`. Der Hersteller ist optional. Zeilen, die mit `#` beginnen, werden ignoriert.",
+          "scan_interval": "Minuten zwischen zwei Scans."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap ist nicht verfügbar: {error}"
+    }
+  }
+}

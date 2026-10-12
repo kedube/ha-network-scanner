@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Lägg till nätverk"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Skanna ett eller flera IP-intervall med nmap och lista enheterna som svarar. nmap behöver root-behörighet eller behörigheten CAP_NET_RAW för att kunna läsa MAC-adresser.",
+        "data": {
+          "ip_range": "IP-intervall",
+          "mac_mappings": "MAC-adressmappningar",
+          "scan_interval": "Skanningsintervall"
+        },
+        "data_description": {
+          "ip_range": "Ett eller flera nmap-mål separerade med mellanslag, t.ex. `192.168.1.0/24` eller `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "En enhet per rad: `mac;namn;tillverkare`. Tillverkaren är valfri. Rader som börjar med `#` ignoreras.",
+          "scan_interval": "Minuter mellan skanningar."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Ange minst ett nmap-mål, till exempel `192.168.1.0/24` eller `192.168.1.1-254`.",
+      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`.",
+      "nmap_unavailable": "Programmet nmap hittades inte eller kunde inte köras. Installera nmap där Home Assistant körs."
+    },
+    "abort": {
+      "already_configured": "Det här IP-intervallet är redan konfigurerat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Alternativ för Network Scanner",
+        "description": "Ändringarna gäller direkt: integrationen läses in på nytt och kör en ny skanning.",
+        "data": {
+          "mac_mappings": "MAC-adressmappningar",
+          "scan_interval": "Skanningsintervall"
+        },
+        "data_description": {
+          "mac_mappings": "En enhet per rad: `mac;namn;tillverkare`. Tillverkaren är valfri. Rader som börjar med `#` ignoreras.",
+          "scan_interval": "Minuter mellan skanningar."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap är inte tillgängligt: {error}"
+    }
+  }
+}

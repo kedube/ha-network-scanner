@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import re
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -211,3 +213,32 @@ def test_translations_match_strings() -> None:
     strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
     english = json.loads((INTEGRATION_DIR / "translations" / "en.json").read_text())
     assert english == strings
+
+
+def _flatten(strings: dict[str, Any], prefix: str = "") -> dict[str, str]:
+    """{"a": {"b": "text"}} -> {"a.b": "text"}."""
+    flat: dict[str, str] = {}
+    for key, value in strings.items():
+        if isinstance(value, dict):
+            flat.update(_flatten(value, f"{prefix}{key}."))
+        else:
+            flat[f"{prefix}{key}"] = value
+    return flat
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted((INTEGRATION_DIR / "translations").glob("*.json")),
+    ids=lambda path: path.stem,
+)
+def test_translation_is_complete(path: Path) -> None:
+    """Every language has exactly the English strings, with the same {placeholders}.
+
+    hassfest only checks English. Home Assistant falls back to English for a
+    missing string, but a missing or misspelled placeholder shows up raw.
+    """
+    english = _flatten(json.loads((INTEGRATION_DIR / "strings.json").read_text()))
+    translated = _flatten(json.loads(path.read_text(encoding="utf-8")))
+    assert translated.keys() == english.keys()
+    for key, text in translated.items():
+        assert sorted(re.findall(r"\{\w+\}", text)) == sorted(re.findall(r"\{\w+\}", english[key])), key

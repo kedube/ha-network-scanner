@@ -5,7 +5,7 @@
 // the Python tests expect the integration to produce.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { JSDOM, VirtualConsole } from "jsdom";
 
@@ -56,8 +56,10 @@ function loadCard(t, { query = SERVED_QUERY } = {}) {
   window.resizeCards = (width) => observers.forEach((o) => o.callback([{ contentRect: { width } }]));
   // The card is an ES module that reads its version from import.meta.url.
   // jsdom evaluates classic scripts, so substitute the URL it is served from.
+  // `tail` is code run after the card's own, whose value is returned.
   const moduleUrl = new URL(`/network_scanner/network-scanner-card.js${query}`, PAGE_URL).href;
-  window.evalCard = () => window.eval(CARD_SOURCE.replaceAll("import.meta.url", JSON.stringify(moduleUrl)));
+  window.evalCard = (tail = "") =>
+    window.eval(CARD_SOURCE.replaceAll("import.meta.url", JSON.stringify(moduleUrl)) + tail);
   window.evalCard();
   t.after(() => {
     window.close();
@@ -83,14 +85,17 @@ function scannerState(devices = DEVICES, overrides = {}) {
   };
 }
 
-function makeHass(states = { [ENTITY_ID]: scannerState() }, { integrationVersion = INTEGRATION_VERSION } = {}) {
+function makeHass(
+  states = { [ENTITY_ID]: scannerState() },
+  { integrationVersion = INTEGRATION_VERSION, language = "en" } = {},
+) {
   const hass = {
     states,
     entities: { [ENTITY_ID]: { entity_id: ENTITY_ID, platform: "network_scanner", device_id: DEVICE_ID } },
     devices: { [DEVICE_ID]: { id: DEVICE_ID, sw_version: integrationVersion } },
     themes: { darkMode: false },
-    locale: { language: "en" },
-    language: "en",
+    locale: { language },
+    language,
     serviceCalls: [],
     callService: async (domain, service, data) => {
       hass.serviceCalls.push([domain, service, { ...data }]);
@@ -608,6 +613,104 @@ describe("Scan now", () => {
     await settle();
     assert.deepEqual(toasts, ["Scan failed: Service call timed out"]);
     assert.equal($(card, ".scan").getAttribute("aria-busy"), "false");
+  });
+});
+
+// ---------------------------------------------------------------- languages
+
+describe("languages", () => {
+  const tiles = (card) => $$(card, ".tile-top span").map(text);
+
+  test("every language has exactly the English strings and placeholders", (t) => {
+    const window = loadCard(t);
+    const translations = plain(window.evalCard("\n;TRANSLATIONS"));
+    const placeholders = (value) => (value.match(/\{\w+\}/g) ?? []).sort();
+    const english = translations.en;
+    for (const [language, strings] of Object.entries(translations)) {
+      assert.deepEqual(Object.keys(strings).sort(), Object.keys(english).sort(), `${language} keys`);
+      for (const [key, value] of Object.entries(strings)) {
+        assert.deepEqual(placeholders(value), placeholders(english[key]), `${language}.${key} placeholders`);
+      }
+    }
+
+    // The card and the integration's dialogs come in the same languages.
+    const integrationLanguages = readdirSync(new URL("translations/", INTEGRATION)).map((file) => file.replace(/\.json$/, ""));
+    assert.deepEqual(Object.keys(translations).sort(), integrationLanguages.sort());
+  });
+
+  test("shows everything in the language of the user's profile", async (t) => {
+    const window = loadCard(t);
+    const card = mount(window, { layout: "table", columns: ["ip", "vendor"] }, makeHass(undefined, { language: "de" }));
+
+    assert.equal(text($(card, ".subtitle")), "192.168.1.0/24 · Gescannt vor 3 Minuten");
+    assert.deepEqual(tiles(card), ["Geräte", "Bekannt", "Unbekannt", "Private MAC"]);
+    assert.deepEqual($$(card, ".list-head .th").map(text), ["Gerät", "IP-Adresse", "Hersteller"]);
+    assert.equal($(card, ".search input").placeholder, "Name, IP, MAC, Hersteller suchen…");
+    assert.equal(text($(card, 'select[data-role="vendor"] option')), "Alle Hersteller");
+    assert.ok(labels(card).includes("Unbekanntes Gerät"), labels(card).join());
+
+    const phone = deviceRow(card, "192.168.1.23");
+    await click(window, phone.querySelector(".row"));
+    assert.deepEqual(
+      [...phone.querySelectorAll(".fact dt")].map(text),
+      ["Name", "Beschreibung", "IP-Adresse", "MAC-Adresse", "Hostname", "Hersteller"],
+    );
+    // The suggested mapping line is in the user's language too.
+    assert.equal(text(phone.querySelector(".snippet code")), "da:a1:19:00:00:23;Neues Gerät;Unbekannt");
+
+    await typeSearch(window, card, "nothing-matches-this");
+    assert.equal(text($(card, ".empty-title")), "Keine passenden Geräte");
+  });
+
+  test("names a nameless device after its vendor in the user's language", (t) => {
+    const window = loadCard(t);
+    const device = { ip: "192.168.1.2", mac: "50:C7:BF:00:00:02", name: "Unknown Device", type: "Unknown Device", vendor: "TP-LINK TECHNOLOGIES CO.,LTD.", hostname: null };
+    const card = mount(window, {}, makeHass({ [ENTITY_ID]: scannerState([device]) }, { language: "fr" }));
+    assert.deepEqual(labels(card), ["Appareil TP-LINK"]);
+  });
+
+  test("writes the scan time the way the language does", (t) => {
+    const window = loadCard(t);
+    const card = mount(window, {}, makeHass(undefined, { language: "zh-Hans" }));
+    assert.equal(text($(card, ".subtitle")), "192.168.1.0/24 · 3分钟前扫描");
+  });
+
+  test("a regional variant gets its base language, and an unsupported language English", (t) => {
+    const window = loadCard(t);
+    assert.equal(tiles(mount(window, {}, makeHass(undefined, { language: "de-CH" })))[0], "Geräte");
+    assert.equal(tiles(mount(window, {}, makeHass(undefined, { language: "ja" })))[0], "Devices");
+  });
+
+  test("switching language redraws the card and keeps the search", async (t) => {
+    const window = loadCard(t);
+    const hass = makeHass();
+    const card = mount(window, {}, hass);
+    await typeSearch(window, card, "brother");
+
+    card.hass = { ...hass, locale: { language: "nl" }, language: "nl" };
+    assert.deepEqual(tiles(card), ["Apparaten", "Bekend", "Onbekend", "Privé-MAC"]);
+    assert.equal($(card, ".search input").value, "brother");
+    assert.deepEqual(labels(card), ["Brother Printer"]);
+    assert.equal(text($(card, ".foot span")), "1 van 5 apparaten weergegeven");
+  });
+
+  test("the editor and the card picker follow the language too", (t) => {
+    const window = loadCard(t);
+    const editor = window.document.createElement("network-scanner-card-editor");
+    editor.setConfig({ type: "custom:network-scanner-card" });
+    editor.hass = makeHass(undefined, { language: "es" });
+    window.document.body.appendChild(editor);
+    const form = editor.querySelector("ha-form");
+    assert.equal(form.computeLabel({ name: "show_stats" }), "Mostrar mosaicos de resumen");
+    assert.equal(form.computeHelper({ name: "layout" }), "Automático muestra una tabla si caben las columnas y, si no, una lista.");
+    const layout = form.schema.flatMap((field) => field.schema ?? [field]).find((field) => field.name === "layout");
+    assert.deepEqual(plain(layout.selector.select.options).map((option) => option.label), ["Automático", "Tabla", "Lista"]);
+
+    window.document.documentElement.lang = "it";
+    assert.equal(
+      window.customCards[0].description,
+      "Elenco ordinabile e ricercabile dei dispositivi trovati dall'integrazione Network Scanner.",
+    );
   });
 });
 

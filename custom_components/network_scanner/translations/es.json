@@ -1,0 +1,55 @@
+{
+  "config": {
+    "initiate_flow": {
+      "user": "Añadir red"
+    },
+    "step": {
+      "user": {
+        "title": "Network Scanner",
+        "description": "Escanea uno o varios rangos de IP con nmap y muestra los dispositivos que responden. nmap necesita permisos de root o la capacidad CAP_NET_RAW para leer las direcciones MAC.",
+        "data": {
+          "ip_range": "Rango de IP",
+          "mac_mappings": "Asignaciones de direcciones MAC",
+          "scan_interval": "Intervalo de escaneo"
+        },
+        "data_description": {
+          "ip_range": "Uno o varios objetivos de nmap separados por espacios, p. ej. `192.168.1.0/24` o `192.168.1.1-254 10.0.0.0/24`.",
+          "mac_mappings": "Un dispositivo por línea: `mac;nombre;fabricante`. El fabricante es opcional. Las líneas que empiezan por `#` se ignoran.",
+          "scan_interval": "Minutos entre escaneos."
+        }
+      }
+    },
+    "error": {
+      "invalid_ip_range": "Introduce al menos un objetivo de nmap, como `192.168.1.0/24` o `192.168.1.1-254`.",
+      "invalid_mac_mappings": "La línea {line} no es una asignación válida. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`.",
+      "nmap_unavailable": "No se ha encontrado o no se ha podido ejecutar el programa nmap. Instala nmap donde se ejecuta Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Este rango de IP ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Network Scanner",
+        "description": "Los cambios se aplican de inmediato: la integración se recarga y realiza un nuevo escaneo.",
+        "data": {
+          "mac_mappings": "Asignaciones de direcciones MAC",
+          "scan_interval": "Intervalo de escaneo"
+        },
+        "data_description": {
+          "mac_mappings": "Un dispositivo por línea: `mac;nombre;fabricante`. El fabricante es opcional. Las líneas que empiezan por `#` se ignoran.",
+          "scan_interval": "Minutos entre escaneos."
+        }
+      }
+    },
+    "error": {
+      "invalid_mac_mappings": "La línea {line} no es una asignación válida. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`."
+    }
+  },
+  "exceptions": {
+    "nmap_unavailable": {
+      "message": "nmap no está disponible: {error}"
+    }
+  }
+}
