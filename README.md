@@ -39,22 +39,36 @@ See every device on your home network in Home Assistant. Network Scanner finds d
 
 ## Quick start
 
-1. [Install it with HACS](#hacs-recommended) and restart Home Assistant.
+1. Install it with the [Marketplace](#marketplace-home-assistant-202611-and-newer) (Home Assistant 2026.11 and newer) or [HACS](#hacs-home-assistant-202610-and-older), and restart Home Assistant.
 2. [Add the integration](#configuration) and enter your network's IP range, such as `192.168.1.0/24`.
 3. Edit a dashboard, choose **Add card**, and pick **Network Scanner**.
 
 ## Requirements
 
 - Home Assistant 2025.1 or newer.
-- [HACS](https://hacs.xyz/), for the recommended installation.
+- For the recommended installation, the Marketplace on Home Assistant 2026.11 and newer (it is built in), or [HACS](https://hacs.xyz/) on older versions.
 - The `nmap` program, installed where Home Assistant runs. To report MAC addresses (which the device list needs), nmap must run as root or with the `CAP_NET_RAW` capability. The setup form checks that nmap works before it creates the integration.
 - Home Assistant must be on the network it scans. nmap can only read the MAC addresses of devices on the same local network (the same subnet or VLAN) as Home Assistant, and devices without one aren't listed. To scan a second subnet, Home Assistant needs a network interface on it.
 
 ## Installation
 
-### HACS (recommended)
+### Marketplace (Home Assistant 2026.11 and newer)
 
-This repository is not in the HACS default store, so add it to HACS as a custom repository. The quickest way is this button, which opens it in HACS on your Home Assistant:
+Home Assistant 2026.11 has HACS built in, as the **Marketplace** under **Settings**. If you installed Network Scanner with HACS, it moves to the Marketplace by itself on the first start after you update Home Assistant, so there is nothing to do.
+
+Network Scanner is not in the Marketplace catalog, so add it from its GitHub link. That needs a GitHub account connected to the Marketplace, which it asks you to connect the first time. The quickest way is the button under [HACS](#hacs-home-assistant-202610-and-older) below, which opens this repository in the Marketplace on 2026.11 and newer.
+
+Or add it by hand:
+
+1. Go to **Settings > Marketplace** and open the **Add from link** tab.
+2. Enter `https://github.com/kedube/ha-network-scanner` as the **GitHub link**, choose the type **Integration**, and select **Add**.
+3. Open **Network Scanner** and select **Install**.
+4. Restart Home Assistant.
+5. [Add the integration](#configuration).
+
+### HACS (Home Assistant 2026.10 and older)
+
+This repository is not in the HACS default store, so add it to HACS as a custom repository. The quickest way is this button, which opens it in HACS on your Home Assistant (or in the Marketplace on 2026.11 and newer):
 
 [![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=kedube&repository=ha-network-scanner&category=integration)
 
@@ -67,11 +81,11 @@ Or add it by hand:
 5. Restart Home Assistant.
 6. [Add the integration](#configuration).
 
-Already have Network Scanner installed from another repository, such as the original `parvez/network_scanner`? Both use the `network_scanner` domain, so only one can be installed at a time. Remove the old one in HACS first, but keep its entry under **Settings > Devices & services**. After you download this one and restart, the existing entry is upgraded automatically (see [Upgrading from 1.x](#upgrading-from-1x)).
+Already have Network Scanner installed from another repository, such as the original `parvez/network_scanner`? Both use the `network_scanner` domain, so only one can be installed at a time. Remove the old one in the Marketplace or HACS first, but keep its entry under **Settings > Devices & services**. After you download this one and restart, the existing entry is upgraded automatically (see [Upgrading from 1.x](#upgrading-from-1x)).
 
 ### Updating
 
-HACS offers each new release as an update and shows its release notes. Install the update, restart Home Assistant, and then refresh your browser so dashboards load the new version of the card. If you forget, the card reminds you (see [Card version](#card-version)).
+The Marketplace (or HACS) offers each new release as an update and shows its release notes. Install the update, restart Home Assistant, and then refresh your browser so dashboards load the new version of the card. If you forget, the card reminds you (see [Card version](#card-version)).
 
 ### Manual installation
 
@@ -365,7 +379,7 @@ Then run a scan and check the log. Include it when you [report a problem](https:
 
 1. Remove any Network Scanner cards from your dashboards.
 2. In **Settings > Devices & services**, open **Network Scanner** and delete each of its entries.
-3. In **HACS**, open **Network Scanner** and choose **Remove** from its menu.
+3. In **Settings > Marketplace**, open **Network Scanner** and select **Uninstall**. On Home Assistant 2026.10 and older, open it in **HACS** instead and choose **Remove** from its menu.
 4. Restart Home Assistant.
 
 ## Contributing and support

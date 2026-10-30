@@ -1,6 +1,7 @@
 {
   "domain": "network_scanner",
   "name": "Network Scanner",
+  "categories": ["presence_location.network_presence"],
   "codeowners": ["@kedube"],
   "config_flow": true,
   "dependencies": ["frontend", "http"],
