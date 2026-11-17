@@ -55,8 +55,12 @@ def test_normalize_ip_range_collapses_whitespace() -> None:
         "10.0.0.*",
         "192.168.1.1,5,9",
         "192.168.1.0/24 10.0.0.0/24",
-        "fe80::1",
         "printer.lan",
+        "printer.lan/24",
+        # MAX_TARGETS exactly: 65,536 addresses.
+        "192.168.0.0/16",
+        "10.0-255.0-255.1",
+        "192.168.0.0/17 192.168.128.0/17",
     ],
 )
 def test_validate_ip_range_accepts_nmap_targets(ip_range: str) -> None:
@@ -74,6 +78,22 @@ def test_validate_ip_range_accepts_nmap_targets(ip_range: str) -> None:
         "192.168.1.0/24;reboot",
         "$(reboot)",
         "'192.168.1.1'",
+        # The sweep runs without -6 and only reads IPv4 addresses, so an IPv6
+        # range would always come back empty.
+        "fe80::1",
+        "fd00::/120",
+        "192.168.1.0/24 fd00::1",
+        # Too big to sweep within NMAP_TIMEOUT: it would fail on every scan.
+        "0.0.0.0/0",
+        "10.0.0.0/8",
+        "192.168.0.0/15",
+        "10.*.*.*",
+        "10.0-255.0-255.0-255",
+        "192.168.0.0/16 10.0.0.1",
+        "printer.lan/8",
+        # Not a prefix length.
+        "10.0.0.0/33",
+        "10.0.0.0/",
     ],
 )
 def test_validate_ip_range_rejects_non_targets(ip_range: str) -> None:

@@ -75,6 +75,33 @@ async def test_first_scan_does_not_block_setup(
     assert hass.states.get(ENTITY_ID).state == "5"
 
 
+@pytest.mark.parametrize(
+    ("version", "ip_range"),
+    [
+        # Version 1 entries never went through the current config flow, and
+        # nmap reads anything starting with "-" as an option.
+        (1, "-iL /etc/hosts"),
+        (1, "--script=/tmp/x.nse 192.168.1.0/24"),
+        (1, ""),
+        # Accepted by earlier releases: IPv6 always came back empty, and a /8
+        # timed out on every scan.
+        (2, "fd00::/120"),
+        (2, "10.0.0.0/8"),
+    ],
+)
+async def test_setup_refuses_an_ip_range_nmap_must_not_see(
+    hass: HomeAssistant, mock_nmap: FakeNmap, version: int, ip_range: str
+) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, version=version, data={CONF_IP_RANGE: ip_range})
+    entry.add_to_hass(hass)
+    assert not await hass.config_entries.async_setup(entry.entry_id)
+    # Permanent: the range can't be edited, only deleted and added again.
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+    assert entry.error_reason_translation_key == "invalid_ip_range"
+    assert entry.reason.startswith(f'The IP range "{ip_range}" can\'t be scanned')
+    assert mock_nmap.processes == []
+
+
 async def test_reload_stops_the_running_scan(
     hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_nmap: FakeNmap
 ) -> None:

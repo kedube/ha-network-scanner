@@ -102,7 +102,7 @@ Manual installs don't get update notifications. Repeat these steps to update.
 1. Go to **Settings > Devices & services**.
 2. Select **+ Add Integration** and search for **Network Scanner**.
 3. Fill in the form:
-   - **IP range**: one or more nmap targets separated by spaces, such as `192.168.1.0/24`, `192.168.1.1-254`, or `10.100.1.0/24 10.1.1.0/24` for several subnets.
+   - **IP range**: one or more IPv4 nmap targets separated by spaces, such as `192.168.1.0/24`, `192.168.1.1-254`, or `10.100.1.0/24 10.1.1.0/24` for several subnets. Together they can cover at most 65,536 addresses (a `/16`), because a bigger range can't be swept within nmap's 10-minute limit. IPv6 isn't supported.
    - **MAC address mappings** (optional): names for your devices, one per line (see below).
    - **Scan interval**: minutes between scans (default 15).
 
@@ -353,6 +353,8 @@ Everything runs on your Home Assistant host. Hostname lookups go to the DNS serv
 ## Troubleshooting
 
 **Adding the integration says nmap could not be found.** Install nmap where Home Assistant runs, then try again.
+
+**The integration fails to start with "The IP range … can't be scanned".** The range was saved by an older version that accepted it, but it is IPv6, covers more than 65,536 addresses, or isn't a valid nmap target. The range can't be edited, so delete the entry and add the network again with a valid range.
 
 **The sensor reports 0 devices although devices are online.** nmap is probably running without root or the `CAP_NET_RAW` capability, so it can't read MAC addresses. A warning is logged once per start when this happens.
 

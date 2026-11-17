@@ -13,14 +13,14 @@
           "scan_interval": "Scaninterval"
         },
         "data_description": {
-          "ip_range": "Een of meer nmap-doelen, gescheiden door spaties, bijv. `192.168.1.0/24` of `192.168.1.1-254 10.0.0.0/24`.",
+          "ip_range": "Een of meer IPv4-nmap-doelen, gescheiden door spaties, bijv. `192.168.1.0/24` of `192.168.1.1-254 10.0.0.0/24`, samen maximaal 65.536 adressen.",
           "mac_mappings": "Eén apparaat per regel: `mac;naam;fabrikant`. De fabrikant is optioneel. Regels die met `#` beginnen, worden genegeerd.",
           "scan_interval": "Minuten tussen scans."
         }
       }
     },
     "error": {
-      "invalid_ip_range": "Voer ten minste één nmap-doel in, zoals `192.168.1.0/24` of `192.168.1.1-254`.",
+      "invalid_ip_range": "Voer IPv4-nmap-doelen in, zoals `192.168.1.0/24` of `192.168.1.1-254`, samen maximaal 65.536 adressen (een /16).",
       "invalid_mac_mappings": "Regel {line} is geen geldige koppeling, of koppelt een MAC-adres dat een eerdere regel al koppelt. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`.",
       "nmap_unavailable": "Het programma nmap is niet gevonden of kon niet worden uitgevoerd. Installeer nmap op de plek waar Home Assistant draait."
     },
@@ -48,6 +48,9 @@
     }
   },
   "exceptions": {
+    "invalid_ip_range": {
+      "message": "Het IP-bereik '{ip_range}' kan niet worden gescand: het moet bestaan uit IPv4-nmap-doelen van samen maximaal 65.536 adressen. Verwijder deze vermelding en voeg het netwerk opnieuw toe."
+    },
     "nmap_unavailable": {
       "message": "nmap is niet beschikbaar: {error}"
     }

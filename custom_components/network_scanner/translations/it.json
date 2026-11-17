@@ -13,14 +13,14 @@
           "scan_interval": "Intervallo di scansione"
         },
         "data_description": {
-          "ip_range": "Uno o più target nmap separati da spazi, ad es. `192.168.1.0/24` o `192.168.1.1-254 10.0.0.0/24`.",
+          "ip_range": "Uno o più target nmap IPv4 separati da spazi, ad es. `192.168.1.0/24` o `192.168.1.1-254 10.0.0.0/24`, per un massimo di 65.536 indirizzi in totale.",
           "mac_mappings": "Un dispositivo per riga: `mac;nome;produttore`. Il produttore è facoltativo. Le righe che iniziano con `#` vengono ignorate.",
           "scan_interval": "Minuti tra una scansione e l'altra."
         }
       }
     },
     "error": {
-      "invalid_ip_range": "Inserisci almeno un target nmap, ad esempio `192.168.1.0/24` o `192.168.1.1-254`.",
+      "invalid_ip_range": "Inserisci target nmap IPv4, ad esempio `192.168.1.0/24` o `192.168.1.1-254`, per un massimo di 65.536 indirizzi in totale (un /16).",
       "invalid_mac_mappings": "La riga {line} non è un'associazione valida, oppure associa un indirizzo MAC già associato da una riga precedente. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`.",
       "nmap_unavailable": "Impossibile trovare o eseguire il programma nmap. Installa nmap dove è in esecuzione Home Assistant."
     },
@@ -48,6 +48,9 @@
     }
   },
   "exceptions": {
+    "invalid_ip_range": {
+      "message": "Impossibile scansionare l'intervallo IP «{ip_range}»: deve essere composto da target nmap IPv4 per un massimo di 65.536 indirizzi. Elimina questa voce e aggiungi di nuovo la rete."
+    },
     "nmap_unavailable": {
       "message": "nmap non è disponibile: {error}"
     }

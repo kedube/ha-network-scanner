@@ -32,6 +32,7 @@ from .scanner import (
     NmapUnavailableError,
     normalize_ip_range,
     parse_mac_mappings,
+    validate_ip_range,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -174,6 +175,16 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: NetworkScannerConfigEntry) -> bool:
     """Set up Network Scanner from a config entry."""
     ip_range: str = entry.data[CONF_IP_RANGE]
+    # The config flow validates new entries, but migrated version 1 entries
+    # and hand-edited storage never went through it, and nmap would read a
+    # target such as "-iL /etc/hosts" as an option. Permanent, like a missing
+    # nmap: the range can't be changed, only deleted and added again.
+    if not validate_ip_range(ip_range):
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="invalid_ip_range",
+            translation_placeholders={"ip_range": ip_range},
+        )
     mapping = parse_mac_mappings(entry.options.get(CONF_MAC_MAPPINGS, ""))
     scan_interval = int(entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
 

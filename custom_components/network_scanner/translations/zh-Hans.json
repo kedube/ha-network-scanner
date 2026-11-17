@@ -13,14 +13,14 @@
           "scan_interval": "扫描间隔"
         },
         "data_description": {
-          "ip_range": "一个或多个 nmap 目标，以空格分隔，例如 `192.168.1.0/24` 或 `192.168.1.1-254 10.0.0.0/24`。",
+          "ip_range": "一个或多个 IPv4 nmap 目标，以空格分隔，例如 `192.168.1.0/24` 或 `192.168.1.1-254 10.0.0.0/24`，总共最多 65,536 个地址。",
           "mac_mappings": "每行一个设备：`mac;名称;制造商`。制造商可选。以 `#` 开头的行会被忽略。",
           "scan_interval": "两次扫描之间的分钟数。"
         }
       }
     },
     "error": {
-      "invalid_ip_range": "请输入至少一个 nmap 目标，例如 `192.168.1.0/24` 或 `192.168.1.1-254`。",
+      "invalid_ip_range": "请输入 IPv4 nmap 目标，例如 `192.168.1.0/24` 或 `192.168.1.1-254`，总共最多 65,536 个地址（即一个 /16）。",
       "invalid_mac_mappings": "第 {line} 行不是有效的映射，或者映射了前面某一行已映射的 MAC 地址。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。",
       "nmap_unavailable": "找不到或无法运行 nmap 程序。请在运行 Home Assistant 的系统上安装 nmap。"
     },
@@ -48,6 +48,9 @@
     }
   },
   "exceptions": {
+    "invalid_ip_range": {
+      "message": "无法扫描 IP 范围“{ip_range}”：它必须是总共最多 65,536 个地址的 IPv4 nmap 目标。请删除此条目，然后重新添加该网络。"
+    },
     "nmap_unavailable": {
       "message": "nmap 不可用：{error}"
     }

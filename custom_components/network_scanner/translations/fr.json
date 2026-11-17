@@ -13,14 +13,14 @@
           "scan_interval": "Intervalle d'analyse"
         },
         "data_description": {
-          "ip_range": "Une ou plusieurs cibles nmap séparées par des espaces, par exemple `192.168.1.0/24` ou `192.168.1.1-254 10.0.0.0/24`.",
+          "ip_range": "Une ou plusieurs cibles nmap IPv4 séparées par des espaces, par exemple `192.168.1.0/24` ou `192.168.1.1-254 10.0.0.0/24`, couvrant au plus 65 536 adresses au total.",
           "mac_mappings": "Un appareil par ligne : `mac;nom;fabricant`. Le fabricant est facultatif. Les lignes commençant par `#` sont ignorées.",
           "scan_interval": "Minutes entre deux analyses."
         }
       }
     },
     "error": {
-      "invalid_ip_range": "Saisissez au moins une cible nmap, par exemple `192.168.1.0/24` ou `192.168.1.1-254`.",
+      "invalid_ip_range": "Saisissez des cibles nmap IPv4, par exemple `192.168.1.0/24` ou `192.168.1.1-254`, couvrant au plus 65 536 adresses au total (un /16).",
       "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide, ou associe une adresse MAC qu'une ligne précédente associe déjà. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`.",
       "nmap_unavailable": "Le programme nmap est introuvable ou n'a pas pu être exécuté. Installez nmap là où Home Assistant s'exécute."
     },
@@ -48,6 +48,9 @@
     }
   },
   "exceptions": {
+    "invalid_ip_range": {
+      "message": "La plage d'adresses IP « {ip_range} » ne peut pas être analysée : elle doit être composée de cibles nmap IPv4 couvrant au plus 65 536 adresses. Supprimez cette entrée et ajoutez à nouveau le réseau."
+    },
     "nmap_unavailable": {
       "message": "nmap n'est pas disponible : {error}"
     }

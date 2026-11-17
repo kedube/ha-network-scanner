@@ -102,7 +102,8 @@ async def test_create_entry(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.parametrize(
-    "ip_range", ["", "-oN /tmp/out 192.168.1.0/24", "192.168.1.0/24; reboot"]
+    "ip_range",
+    ["", "-oN /tmp/out 192.168.1.0/24", "192.168.1.0/24; reboot", "fd00::/120", "10.0.0.0/8"],
 )
 async def test_invalid_ip_range(hass: HomeAssistant, mock_nmap: FakeNmap, ip_range: str) -> None:
     result = await start_user_flow(hass)

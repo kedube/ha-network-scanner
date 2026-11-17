@@ -50,10 +50,19 @@ RDNS_BATCH_TIMEOUT = 10.0  # seconds, for the whole batch
 _MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
 # One nmap target token: CIDR (10.0.0.0/24), octet ranges (10.0.0.1-254),
-# wildcards (10.0.0.*), plain IPv4/IPv6, or a hostname. Each token becomes one
-# nmap argument, so anything outside this set, or anything that starts with "-"
-# and would be read as an nmap option, is rejected up front.
-_IP_RANGE_TOKEN_RE = re.compile(r"^[A-Za-z0-9.:*/,_][A-Za-z0-9.:*/,_-]*$")
+# wildcards (10.0.0.*), a plain IPv4 address, or a hostname. Each token becomes
+# one nmap argument, so anything outside this set, or anything that starts with
+# "-" and would be read as an nmap option, is rejected up front. IPv6 (any ":")
+# is rejected too: the sweep runs without -6 and only reads IPv4 addresses.
+_IP_RANGE_TOKEN_RE = re.compile(r"^[A-Za-z0-9.*/,_][A-Za-z0-9.*/,_-]*$")
+
+# nmap must finish a sweep within NMAP_TIMEOUT. A /16 (65,536 addresses) needs
+# about 110 probes a second to do that; a /8 would need about 28,000, so it
+# would time out on every scan while flooding the network.
+MAX_TARGETS = 65_536
+# An IPv4 target pattern, as opposed to a hostname: four octets, each a number,
+# a "*" wildcard, or a "1-254" / "1,5,9" list.
+_IPV4_PATTERN_RE = re.compile(r"^[0-9*,-]+(\.[0-9*,-]+){3}$")
 
 UNKNOWN_DEVICE = "Unknown Device"
 UNKNOWN_VENDOR = "Unknown"
@@ -107,10 +116,32 @@ def normalize_ip_range(ip_range: str) -> str:
     return " ".join(ip_range.split())
 
 
+def _max_addresses(token: str) -> int:
+    """Upper bound on how many addresses one nmap target token covers.
+
+    Exact for CIDR. Each octet with a wildcard, range or list counts as 256,
+    which over-counts "192.168.1-2.0" but never under-counts. A hostname is
+    one address, or its CIDR size ("printer.lan/24").
+    """
+    host, slash, prefix = token.partition("/")
+    if slash and (not prefix.isdecimal() or int(prefix) > 32):
+        return MAX_TARGETS + 1
+    count = 2 ** (32 - int(prefix)) if slash else 1
+    if _IPV4_PATTERN_RE.match(host):
+        for octet in host.split("."):
+            if any(c in octet for c in "*,-"):
+                count *= 256
+    return count
+
+
 def validate_ip_range(ip_range: str) -> bool:
-    """Return True if every whitespace-separated target looks like an nmap target."""
+    """True if every target is an IPv4 nmap target and the sweep is bounded."""
     tokens = ip_range.split()
-    return bool(tokens) and all(_IP_RANGE_TOKEN_RE.match(token) for token in tokens)
+    return (
+        bool(tokens)
+        and all(_IP_RANGE_TOKEN_RE.match(token) for token in tokens)
+        and sum(_max_addresses(token) for token in tokens) <= MAX_TARGETS
+    )
 
 
 def normalize_mac(mac: str) -> str:
