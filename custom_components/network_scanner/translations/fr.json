@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Saisissez au moins une cible nmap, par exemple `192.168.1.0/24` ou `192.168.1.1-254`.",
-      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`.",
+      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide, ou associe une adresse MAC qu'une ligne précédente associe déjà. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`.",
       "nmap_unavailable": "Le programme nmap est introuvable ou n'a pas pu être exécuté. Installez nmap là où Home Assistant s'exécute."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`."
+      "invalid_mac_mappings": "La ligne {line} n'est pas une correspondance valide, ou associe une adresse MAC qu'une ligne précédente associe déjà. Utilisez `aa:bb:cc:dd:ee:ff;Nom;Fabricant`."
     }
   },
   "exceptions": {

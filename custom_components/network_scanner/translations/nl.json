@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Voer ten minste één nmap-doel in, zoals `192.168.1.0/24` of `192.168.1.1-254`.",
-      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`.",
+      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling, of koppelt een MAC-adres dat een eerdere regel al koppelt. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`.",
       "nmap_unavailable": "Het programma nmap is niet gevonden of kon niet worden uitgevoerd. Installeer nmap op de plek waar Home Assistant draait."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`."
+      "invalid_mac_mappings": "Regel {line} is geen geldige koppeling, of koppelt een MAC-adres dat een eerdere regel al koppelt. Gebruik `aa:bb:cc:dd:ee:ff;Naam;Fabrikant`."
     }
   },
   "exceptions": {

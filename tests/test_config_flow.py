@@ -127,6 +127,17 @@ async def test_invalid_mac_mappings(hass: HomeAssistant) -> None:
     assert result["description_placeholders"] == {"line": "3"}
 
 
+async def test_mac_mapped_twice(hass: HomeAssistant) -> None:
+    """The second line used to win without a word."""
+    result = await start_user_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        user_input(mac_mappings="aa:bb:cc:dd:ee:ff;Printer\nAA-BB-CC-DD-EE-FF;TV"),
+    )
+    assert result["errors"] == {CONF_MAC_MAPPINGS: "invalid_mac_mappings"}
+    assert result["description_placeholders"] == {"line": "2"}
+
+
 async def test_nmap_unavailable_then_fixed(hass: HomeAssistant, mock_nmap: FakeNmap) -> None:
     mock_nmap.available = False
     result = await start_user_flow(hass)

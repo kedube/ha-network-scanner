@@ -1,7 +1,9 @@
 """Pure nmap scanning logic, isolated from Home Assistant internals.
 
 This module must not import anything from homeassistant, and must not touch
-the event loop. All calls into it run inside the executor via the coordinator.
+the event loop. All calls into it run inside the executor via the coordinator,
+except NetworkScannerClient.stop(), which only signals a process and is safe
+to call from the event loop.
 """
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ import re
 import socket
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
+from subprocess import DEVNULL, PIPE, Popen, TimeoutExpired
 from typing import Any, TypedDict
 
 import nmap
@@ -47,9 +50,9 @@ RDNS_BATCH_TIMEOUT = 10.0  # seconds, for the whole batch
 _MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
 # One nmap target token: CIDR (10.0.0.0/24), octet ranges (10.0.0.1-254),
-# wildcards (10.0.0.*), plain IPv4/IPv6, or a hostname. python-nmap passes the
-# string through shlex.split, so anything outside this set, or anything that
-# starts with "-" and would be read as an nmap flag, is rejected up front.
+# wildcards (10.0.0.*), plain IPv4/IPv6, or a hostname. Each token becomes one
+# nmap argument, so anything outside this set, or anything that starts with "-"
+# and would be read as an nmap option, is rejected up front.
 _IP_RANGE_TOKEN_RE = re.compile(r"^[A-Za-z0-9.:*/,_][A-Za-z0-9.:*/,_-]*$")
 
 UNKNOWN_DEVICE = "Unknown Device"
@@ -72,6 +75,22 @@ MacMapping = dict[str, tuple[str, str]]
 
 class NmapUnavailableError(Exception):
     """The nmap binary could not be found or executed."""
+
+
+class NmapTimeoutError(Exception):
+    """nmap did not finish within NMAP_TIMEOUT."""
+
+
+class ScanStoppedError(Exception):
+    """The scan was stopped because its entry is unloading or Home Assistant is stopping.
+
+    The coordinator's own refreshes never see this: they run as the entry's
+    background tasks, which Home Assistant cancels on unload and on stop. Only
+    a Scan now caught by a reload or a shutdown reports it, as a failed scan.
+    """
+
+
+STOPPED_MESSAGE = "stopped because the integration is reloading or Home Assistant is stopping"
 
 
 class MacMappingError(ValueError):
@@ -105,8 +124,12 @@ def normalize_mac(mac: str) -> str:
 def parse_mac_mappings(text: str, *, strict: bool = False) -> MacMapping:
     """Parse ``mac;name[;manufacturer]`` lines into a lookup dict.
 
-    Blank lines and lines starting with ``#`` are ignored. When ``strict`` is
-    set, a malformed line raises MacMappingError instead of being skipped.
+    Blank lines and lines starting with ``#`` are ignored. With ``strict`` (the
+    config and options forms), a malformed line, a line with more than three
+    fields, or a MAC that an earlier line already maps raises MacMappingError.
+    Otherwise (setup, which must not fail on mappings saved before these checks
+    existed) a malformed line is skipped, and the other two only log a warning:
+    extra fields are dropped and the last line for a MAC wins.
     """
     mapping: MacMapping = {}
     for line_number, raw in enumerate(text.splitlines(), start=1):
@@ -120,6 +143,10 @@ def parse_mac_mappings(text: str, *, strict: bool = False) -> MacMapping:
                 raise MacMappingError(line_number, raw)
             _LOGGER.warning("Ignoring malformed MAC mapping line %d: %r", line_number, raw)
             continue
+        if len(parts) > 3 or mac in mapping:
+            if strict:
+                raise MacMappingError(line_number, raw)
+            _LOGGER.warning("MAC mapping line %d has extra fields or repeats a MAC: %r", line_number, raw)
         manufacturer = parts[2] if len(parts) > 2 and parts[2] else UNKNOWN_DEVICE
         mapping[mac] = (parts[1], manufacturer)
     return mapping
@@ -217,7 +244,14 @@ class NetworkScannerClient:
         self.mac_mapping = mac_mapping
         self._lock = threading.Lock()
         self._warned_no_mac = False
+        # The running nmap process, kept so stop() can kill it from another
+        # thread. _process_lock guards it and _stopped, and is only ever held
+        # for an assignment, so stop() can take it on the event loop.
+        self._process: Popen[bytes] | None = None
+        self._process_lock = threading.Lock()
+        self._stopped = False
         try:
+            # Finds the nmap binary (by running `nmap -V`) and parses its XML.
             self.nm = nmap.PortScanner()
         except nmap.PortScannerError as err:
             raise NmapUnavailableError(str(err)) from err
@@ -225,6 +259,20 @@ class NetworkScannerClient:
 
     def _device_info_from_mac(self, mac: str) -> tuple[str, str]:
         return self.mac_mapping.get(mac.lower(), (UNKNOWN_DEVICE, UNKNOWN_DEVICE))
+
+    def stop(self) -> None:
+        """Kill a running sweep, and make every later scan() fail at once.
+
+        Called when the entry unloads, which includes the reload after an
+        options change, and when Home Assistant stops. Without it the old
+        client's nmap would keep sweeping for up to NMAP_TIMEOUT, alongside
+        the new client's. Does not block, so it is safe on the event loop.
+        """
+        with self._process_lock:
+            self._stopped = True
+            process = self._process
+        if process is not None:
+            process.kill()
 
     def scan(self) -> list[DeviceInfo]:
         """Run an nmap ping scan and return the list of discovered devices.
@@ -237,10 +285,41 @@ class NetworkScannerClient:
         with self._lock:
             return self._scan_locked()
 
+    def _run_nmap(self) -> tuple[str, str]:
+        """Run the ping sweep and return nmap's XML output and its stderr.
+
+        python-nmap's PortScanner.scan() would do this, but it keeps the
+        process to itself, so nothing could stop it, and on a timeout it kills
+        nmap without reaping it.
+        """
+        if self._stopped:
+            raise ScanStoppedError(STOPPED_MESSAGE)
+        # The same binary PortScanner found and ran `nmap -V` on.
+        args = [self.nm._nmap_path, "-oX", "-", *self.ip_range.split(), *NMAP_ARGS.split()]
+        process = Popen(args, stdin=DEVNULL, stdout=PIPE, stderr=PIPE)
+        with self._process_lock:
+            self._process = process
+            if self._stopped:  # stop() ran while nmap was starting
+                process.kill()
+        try:
+            output, errors = process.communicate(timeout=NMAP_TIMEOUT)
+        except TimeoutExpired:
+            process.kill()
+            process.communicate()  # reap it
+            raise NmapTimeoutError(f"nmap did not finish within {NMAP_TIMEOUT} seconds") from None
+        finally:
+            with self._process_lock:
+                self._process = None
+        if self._stopped:
+            raise ScanStoppedError(STOPPED_MESSAGE)
+        return output.decode(errors="replace"), errors.decode(errors="replace")
+
     def _scan_locked(self) -> list[DeviceInfo]:
         # Any nmap failure propagates; the coordinator turns it into
         # UpdateFailed and logs it once, so there is no logging here.
-        self.nm.scan(hosts=self.ip_range, arguments=NMAP_ARGS, timeout=NMAP_TIMEOUT)
+        output, errors = self._run_nmap()
+        # Raises PortScannerError, carrying nmap's stderr, if the output isn't XML.
+        self.nm.analyse_nmap_xml_scan(nmap_xml_output=output, nmap_err=errors)
 
         hosts_up = self.nm.all_hosts()
         devices: list[DeviceInfo] = []

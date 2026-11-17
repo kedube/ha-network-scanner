@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 from homeassistant.components.frontend import UrlManager
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
@@ -29,7 +30,7 @@ from custom_components.network_scanner.const import (
     DOMAIN,
 )
 
-from .common import ENTITY_ID, INTEGRATION_VERSION, IP_RANGE, FakeNmap
+from .common import ENTITY_ID, INTEGRATION_VERSION, IP_RANGE, FakeNmap, wait_for
 
 # ---------------------------------------------------------------- setup
 
@@ -74,6 +75,44 @@ async def test_first_scan_does_not_block_setup(
     assert hass.states.get(ENTITY_ID).state == "5"
 
 
+async def test_reload_stops_the_running_scan(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_nmap: FakeNmap
+) -> None:
+    """Saving the options reloads the entry. The old client's nmap used to keep
+    sweeping for up to NMAP_TIMEOUT alongside the new client's."""
+    mock_nmap.gate = threading.Event()
+    mock_config_entry.add_to_hass(hass)
+    try:
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await wait_for(lambda: len(mock_nmap.scans) == 1)
+        assert await hass.config_entries.async_reload(mock_config_entry.entry_id)
+        await wait_for(lambda: len(mock_nmap.scans) == 2)
+        old, new = mock_nmap.processes
+        assert old.killed
+        await wait_for(lambda: old.reaped)
+        assert not new.killed
+    finally:
+        mock_nmap.gate.set()
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert hass.states.get(ENTITY_ID).state == "5"
+
+
+async def test_home_assistant_stop_kills_the_running_scan(
+    hass: HomeAssistant, mock_config_entry: MockConfigEntry, mock_nmap: FakeNmap
+) -> None:
+    """Otherwise nmap outlives Home Assistant, or holds up its shutdown."""
+    mock_nmap.gate = threading.Event()
+    mock_config_entry.add_to_hass(hass)
+    try:
+        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        await wait_for(lambda: len(mock_nmap.scans) == 1)
+        hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+        await wait_for(lambda: mock_nmap.processes[0].reaped)
+    finally:
+        mock_nmap.gate.set()
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+
 # ---------------------------------------------------------------- configuration.yaml
 
 
@@ -106,6 +145,14 @@ def test_legacy_mac_mappings_text() -> None:
     assert legacy_mac_mappings_text(source) == (
         "aa:bb:cc:dd:ee:01;One\naa:bb:cc:dd:ee:02;Two\naa:bb:cc:dd:ee:10;Ten"
     )
+
+
+def test_legacy_mac_mappings_text_survives_odd_slot_numbers() -> None:
+    """ "²".isdigit() is True, but int("²") raises: a key like this crashed
+    the config flow's first step and failed the version 1 migration."""
+    source = {"mac_mapping_²": "aa:bb:cc:dd:ee:02;Two", "mac_mapping_1": "aa:bb:cc:dd:ee:01;One"}
+    # A slot that isn't a number sorts first, like an unnumbered one.
+    assert legacy_mac_mappings_text(source) == "aa:bb:cc:dd:ee:02;Two\naa:bb:cc:dd:ee:01;One"
 
 
 # ---------------------------------------------------------------- migration

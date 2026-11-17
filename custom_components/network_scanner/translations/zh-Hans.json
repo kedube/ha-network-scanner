@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "请输入至少一个 nmap 目标，例如 `192.168.1.0/24` 或 `192.168.1.1-254`。",
-      "invalid_mac_mappings": "第 {line} 行不是有效的映射。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。",
+      "invalid_mac_mappings": "第 {line} 行不是有效的映射，或者映射了前面某一行已映射的 MAC 地址。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。",
       "nmap_unavailable": "找不到或无法运行 nmap 程序。请在运行 Home Assistant 的系统上安装 nmap。"
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "第 {line} 行不是有效的映射。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。"
+      "invalid_mac_mappings": "第 {line} 行不是有效的映射，或者映射了前面某一行已映射的 MAC 地址。请使用 `aa:bb:cc:dd:ee:ff;名称;制造商` 格式。"
     }
   },
   "exceptions": {

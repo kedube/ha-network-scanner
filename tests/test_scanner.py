@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import subprocess
 import threading
 from unittest.mock import patch
 
@@ -15,7 +16,9 @@ from custom_components.network_scanner.scanner import (
     UNKNOWN_DEVICE,
     MacMappingError,
     NetworkScannerClient,
+    NmapTimeoutError,
     NmapUnavailableError,
+    ScanStoppedError,
     check_nmap,
     normalize_ip_range,
     normalize_mac,
@@ -134,6 +137,30 @@ def test_parse_mac_mappings_strict_reports_line_number() -> None:
     assert err.value.line == "not-a-mac;TV"
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        # A fourth field used to be dropped without a word.
+        "aa:bb:cc:dd:ee:ff;TV;Sony;Living room",
+        # The same MAC written two ways: the last line used to win silently.
+        "aa:bb:cc:dd:ee:ff;TV\nAA-BB-CC-DD-EE-FF;Printer",
+    ],
+)
+def test_parse_mac_mappings_strict_rejects_lines_that_would_lose_data(text: str) -> None:
+    with pytest.raises(MacMappingError) as err:
+        parse_mac_mappings(text, strict=True)
+    assert err.value.line_number == text.count("\n") + 1
+
+
+def test_parse_mac_mappings_warns_about_lines_that_lose_data(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Setup parses leniently, so mappings saved before the strict checks still load."""
+    text = "aa:bb:cc:dd:ee:ff;TV;Sony;Living room\nAA-BB-CC-DD-EE-FF;Printer"
+    assert parse_mac_mappings(text) == {"aa:bb:cc:dd:ee:ff": ("Printer", UNKNOWN_DEVICE)}
+    assert caplog.text.count("has extra fields or repeats a MAC") == 2
+
+
 # ---------------------------------------------------------------- reverse DNS
 
 
@@ -225,8 +252,13 @@ def test_client_requires_nmap(mock_nmap: FakeNmap) -> None:
 def test_scan(mock_nmap: FakeNmap) -> None:
     assert make_client().scan() == SWEEP_DEVICES
     assert mock_nmap.scans == [
-        {"hosts": IP_RANGE, "arguments": NMAP_ARGS, "timeout": NMAP_TIMEOUT}
+        {"args": ["nmap", "-oX", "-", IP_RANGE, *NMAP_ARGS.split()], "timeout": NMAP_TIMEOUT}
     ]
+
+
+def test_scan_passes_each_target_as_one_argument(mock_nmap: FakeNmap) -> None:
+    NetworkScannerClient("192.168.1.0/24  10.0.0.1-9", {}).scan()
+    assert mock_nmap.scans[0]["args"][3:5] == ["192.168.1.0/24", "10.0.0.1-9"]
 
 
 def test_scan_only_resolves_hosts_nmap_did_not_name(mock_reverse_dns: FakeResolver) -> None:
@@ -255,11 +287,80 @@ def test_scan_with_no_mappings() -> None:
     assert {d["name"] for d in devices} == {UNKNOWN_DEVICE}
 
 
-def test_scan_errors_propagate(mock_nmap: FakeNmap) -> None:
-    """The coordinator turns scan errors into UpdateFailed, so they must not be swallowed."""
-    mock_nmap.error = nmap.PortScannerTimeout("Timeout from nmap process")
-    with pytest.raises(nmap.PortScannerTimeout):
+def test_scan_timeout_kills_and_reaps_nmap(mock_nmap: FakeNmap) -> None:
+    """python-nmap killed a timed-out nmap without reaping it, leaving a zombie."""
+    mock_nmap.error = subprocess.TimeoutExpired("nmap", NMAP_TIMEOUT)
+    with pytest.raises(NmapTimeoutError, match="did not finish within 600 seconds"):
         make_client().scan()
+    [process] = mock_nmap.processes
+    assert process.killed
+    assert process.reaped
+
+
+def test_scan_errors_carry_nmap_stderr(mock_nmap: FakeNmap) -> None:
+    """The coordinator turns scan errors into UpdateFailed, so they must not be swallowed."""
+    mock_nmap.xml = ""
+    mock_nmap.stderr = "Failed to open device eth9\nQUITTING!\n"
+    with pytest.raises(nmap.PortScannerError, match="Failed to open device eth9"):
+        make_client().scan()
+
+
+def test_stop_kills_a_running_scan(mock_nmap: FakeNmap) -> None:
+    """Unloading the entry must not leave its nmap sweeping for up to NMAP_TIMEOUT."""
+    client = make_client()
+    mock_nmap.gate = threading.Event()
+    errors: list[BaseException] = []
+
+    def run() -> None:
+        try:
+            client.scan()
+        except BaseException as err:  # noqa: BLE001 - collected for the assert
+            errors.append(err)
+
+    thread = threading.Thread(target=run)
+    thread.start()
+    try:
+        for _ in range(500):
+            if mock_nmap.scans:
+                break
+            thread.join(timeout=0.01)
+        assert len(mock_nmap.scans) == 1, "scan never reached nmap"
+        client.stop()
+        thread.join(timeout=5)
+    finally:
+        mock_nmap.gate.set()
+        thread.join(timeout=5)
+
+    assert [type(err) for err in errors] == [ScanStoppedError]
+    [process] = mock_nmap.processes
+    assert process.killed
+    assert process.reaped
+
+
+def test_stopped_client_does_not_start_nmap(mock_nmap: FakeNmap) -> None:
+    client = make_client()
+    client.stop()
+    with pytest.raises(ScanStoppedError):
+        client.scan()
+    assert mock_nmap.processes == []
+
+
+def test_stop_while_nmap_is_starting(mock_nmap: FakeNmap) -> None:
+    """stop() can land between Popen and the scanner recording the process."""
+    client = make_client()
+
+    def popen(args, **kwargs):
+        client.stop()
+        return mock_nmap.popen(args, **kwargs)
+
+    with (
+        patch.object(scanner, "Popen", side_effect=popen),
+        pytest.raises(ScanStoppedError),
+    ):
+        client.scan()
+    [process] = mock_nmap.processes
+    assert process.killed
+    assert mock_nmap.scans == []
 
 
 def test_scan_skips_a_host_that_fails_to_parse() -> None:

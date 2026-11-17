@@ -37,9 +37,16 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
 
 @pytest.fixture(autouse=True)
 def mock_nmap() -> Generator[FakeNmap]:
-    """Replace the nmap binary for every test, so none can run a real scan."""
+    """Replace the nmap binary for every test, so none can run a real scan.
+
+    The scanner imports Popen by name, so patching it there leaves the real
+    subprocess.Popen alone for everything else.
+    """
     fake = FakeNmap()
-    with patch.object(nmap, "PortScanner", side_effect=fake.port_scanner):
+    with (
+        patch.object(nmap, "PortScanner", side_effect=fake.port_scanner),
+        patch("custom_components.network_scanner.scanner.Popen", side_effect=fake.popen),
+    ):
         yield fake
 
 

@@ -1,9 +1,11 @@
 """Test doubles and expected data shared by the Network Scanner tests."""
 from __future__ import annotations
 
+import asyncio
 import json
 import socket
 import threading
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -55,49 +57,93 @@ def nmap_xml(*hosts: dict[str, str]) -> str:
 
 
 class FakeNmap:
-    """Stands in for the nmap binary behind every PortScanner the integration creates."""
+    """Stands in for the nmap binary: `nmap -V` behind every PortScanner, and the sweep.
+
+    The sweep's output goes through python-nmap's real XML parser, so host,
+    MAC, vendor and hostname extraction is the real library code.
+    """
 
     def __init__(self) -> None:
         self.xml = (FIXTURES / "nmap_ping_sweep.xml").read_text()
+        self.stderr = ""
         self.available = True
+        # Raised by the sweep instead of returning output, e.g. TimeoutExpired.
         self.error: Exception | None = None
-        # When set, scan() blocks until the test sets the event.
+        # When set, the sweep blocks until the test sets the event, or until
+        # the process is killed.
         self.gate: threading.Event | None = None
         self.created = 0
+        # One {"args", "timeout"} per sweep that started running.
         self.scans: list[dict[str, Any]] = []
+        self.processes: list[FakeProcess] = []
 
     def port_scanner(self) -> FakePortScanner:
         """Replacement for the nmap.PortScanner constructor."""
         if not self.available:
             raise nmap.PortScannerError("nmap program was not found in path")
         self.created += 1
-        return FakePortScanner(self)
+        return FakePortScanner()
+
+    def popen(self, args: list[str], **kwargs: Any) -> FakeProcess:
+        """Replacement for the Popen the scanner starts the sweep with."""
+        process = FakeProcess(self, list(args))
+        self.processes.append(process)
+        return process
 
 
 class FakePortScanner(nmap.PortScanner):
-    """python-nmap's PortScanner, parsing canned XML instead of running nmap.
+    """python-nmap's PortScanner, as if `nmap -V` had found nmap 7.95 on the PATH."""
 
-    Only the subprocess is faked: scan() hands the XML to python-nmap's own
-    analyse_nmap_xml_scan, so host, MAC, vendor and hostname extraction is the
-    real library code.
-    """
-
-    def __init__(self, fake: FakeNmap) -> None:
-        self._fake = fake
+    def __init__(self) -> None:
         self._scan_result = {}
         self._nmap_last_output = ""
+        self._nmap_path = "nmap"
         self._nmap_version_number = 7
         self._nmap_subversion_number = 95
 
-    def scan(self, hosts="127.0.0.1", ports=None, arguments="-sV", sudo=False, timeout=0):
-        """Record the call, then parse the canned output (or raise the canned error)."""
+
+class FakeProcess:
+    """A running `nmap -oX - ...` sweep that prints FakeNmap.xml."""
+
+    def __init__(self, fake: FakeNmap, args: list[str]) -> None:
+        self._fake = fake
+        self.args = args
+        self.killed = False
+        self.reaped = False
+
+    def communicate(self, timeout: float | None = None) -> tuple[bytes, bytes]:
+        """Return the canned output, or raise the canned error."""
+        if self.killed:
+            # Killed before it ran, or the scanner reaping it after kill().
+            self.reaped = True
+            return b"", b""
         fake = self._fake
-        fake.scans.append({"hosts": hosts, "arguments": arguments, "timeout": timeout})
-        if fake.gate is not None and not fake.gate.wait(timeout=5):
-            raise TimeoutError("the test never released the scan gate")
+        fake.scans.append({"args": self.args, "timeout": timeout})
+        if fake.gate is not None:
+            for _ in range(500):
+                if fake.gate.is_set() or self.killed:
+                    break
+                fake.gate.wait(0.01)
+            else:
+                raise TimeoutError("the test never released the scan gate")
+        if self.killed:
+            self.reaped = True
+            return b"", b""
         if fake.error is not None:
             raise fake.error
-        return self.analyse_nmap_xml_scan(nmap_xml_output=fake.xml)
+        return fake.xml.encode(), fake.stderr.encode()
+
+    def kill(self) -> None:
+        self.killed = True
+
+
+async def wait_for(condition: Callable[[], bool], seconds: float = 5) -> None:
+    """Let executor threads run until the condition holds."""
+    for _ in range(int(seconds / 0.01)):
+        if condition():
+            return
+        await asyncio.sleep(0.01)
+    raise AssertionError("condition never became true")
 
 
 class FakeResolver:

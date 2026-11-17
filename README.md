@@ -122,6 +122,7 @@ aa:bb:cc:dd:ee:ff;Living room TV
 - The **name** replaces "Unknown Device" everywhere the device appears.
 - The **description** is optional free text, such as the model or manufacturer (the form calls it *manufacturer*). The card shows it under the name, and the sensor stores it as the device's `type`.
 - MAC addresses can be written with colons or dashes, in upper or lower case. Lines starting with `#` are ignored.
+- Each MAC address can be mapped once, and a name or description can't contain `;`. The form points to the line if either happens.
 
 The easiest way to find a MAC address is the card: open an unknown device and copy the ready-made mapping line it offers.
 
@@ -341,11 +342,11 @@ columns:
 On every scan (every 15 minutes unless you change it), Network Scanner:
 
 1. Runs an nmap ping sweep (`nmap -sn`) over your IP range. This only checks which addresses are in use; it doesn't scan ports. On the local network nmap asks with ARP, so it also finds devices that ignore pings, as long as they're awake.
-2. Records the IP address and MAC address of each device that answered, and the manufacturer that nmap looks up from the MAC address.
+2. Records the IP address and MAC address of each device that answered, and the manufacturer that nmap looks up from the MAC address. Home Assistant's own address is never listed, because nmap doesn't report a MAC address for the machine it runs on.
 3. Names each device from your MAC mappings, and looks up hostnames with reverse DNS, all devices at once.
 4. Updates the sensor, which updates the card.
 
-Scans are bounded, so a problem on the network can't stall them: nmap gets at most 10 minutes and the hostname lookups 10 seconds. The first scan runs in the background after Home Assistant starts, so it doesn't slow startup.
+Scans are bounded, so a problem on the network can't stall them: nmap gets at most 10 minutes and the hostname lookups 10 seconds. The first scan runs in the background after Home Assistant starts, so it doesn't slow startup. Changing the options or stopping Home Assistant stops a scan that is still running.
 
 Everything runs on your Home Assistant host. Hostname lookups go to the DNS server Home Assistant uses; nothing else leaves your network.
 

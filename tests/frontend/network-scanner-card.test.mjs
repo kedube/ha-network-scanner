@@ -146,7 +146,7 @@ async function click(window, element) {
 }
 
 function deviceRow(card, ip) {
-  return $$(card, "li.device").find((li) => li.dataset.key === DEVICES.find((d) => d.ip === ip).mac.toUpperCase());
+  return $$(card, "li.device").find((li) => li.dataset.key === `${DEVICES.find((d) => d.ip === ip).mac.toUpperCase()}@${ip}`);
 }
 
 // ---------------------------------------------------------------- registration and config
@@ -568,6 +568,42 @@ describe("device details", () => {
 
     card.hass = { ...hass, states: { [ENTITY_ID]: scannerState() } };
     assert.ok(deviceRow(card, "192.168.1.10").querySelector(".details"));
+  });
+
+  test("devices sharing a MAC address open and show their own details", async (t) => {
+    // A Wi-Fi repeater answers for every client behind it with its own MAC.
+    // Rows were keyed by MAC, so opening one showed the other's details.
+    const window = loadCard(t);
+    const mac = "AA:BB:CC:DD:EE:01";
+    const devices = ["192.168.1.50", "192.168.1.51"].map((ip) => ({
+      ip,
+      mac,
+      name: "Unknown Device",
+      type: "Unknown Device",
+      vendor: "TP-Link",
+      hostname: null,
+    }));
+    const hass = makeHass({ [ENTITY_ID]: scannerState(devices) });
+    const card = mount(window, {}, hass);
+    const rowFor = (ip) => $$(card, "li.device").find((li) => li.dataset.key === `${mac}@${ip}`);
+
+    await click(window, rowFor("192.168.1.50").querySelector(".row"));
+    assert.equal(text(rowFor("192.168.1.50").querySelector(".details .mono")), "192.168.1.50");
+
+    // A new scan re-renders the list: only the row that was opened stays open.
+    card.hass = { ...hass, states: { [ENTITY_ID]: scannerState(devices) } };
+    assert.deepEqual(
+      $$(card, "li.device").map((li) => li.querySelector(".row").getAttribute("aria-expanded")),
+      ["true", "false"],
+    );
+
+    // Each row's button controls its own details panel.
+    await click(window, rowFor("192.168.1.51").querySelector(".row"));
+    const panels = $$(card, ".details").map((el) => el.id);
+    assert.equal(new Set(panels).size, 2);
+    for (const li of $$(card, "li.device")) {
+      assert.equal(li.querySelector(".row").getAttribute("aria-controls"), li.querySelector(".details").id);
+    }
   });
 });
 

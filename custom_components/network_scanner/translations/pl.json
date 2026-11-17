@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Wpisz co najmniej jeden cel nmap, np. `192.168.1.0/24` lub `192.168.1.1-254`.",
-      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`.",
+      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem lub mapuje adres MAC, który mapuje już wcześniejszy wiersz. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`.",
       "nmap_unavailable": "Nie znaleziono programu nmap lub nie można go uruchomić. Zainstaluj nmap tam, gdzie działa Home Assistant."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`."
+      "invalid_mac_mappings": "Wiersz {line} nie jest prawidłowym mapowaniem lub mapuje adres MAC, który mapuje już wcześniejszy wiersz. Użyj formatu `aa:bb:cc:dd:ee:ff;Nazwa;Producent`."
     }
   },
   "exceptions": {

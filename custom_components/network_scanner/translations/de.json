@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Gib mindestens ein nmap-Ziel ein, z. B. `192.168.1.0/24` oder `192.168.1.1-254`.",
-      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`.",
+      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung oder ordnet eine MAC-Adresse zu, die schon eine frühere Zeile zuordnet. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`.",
       "nmap_unavailable": "Das Programm nmap wurde nicht gefunden oder konnte nicht ausgeführt werden. Installiere nmap dort, wo Home Assistant läuft."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`."
+      "invalid_mac_mappings": "Zeile {line} ist keine gültige Zuordnung oder ordnet eine MAC-Adresse zu, die schon eine frühere Zeile zuordnet. Verwende `aa:bb:cc:dd:ee:ff;Name;Hersteller`."
     }
   },
   "exceptions": {

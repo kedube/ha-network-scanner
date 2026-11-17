@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Introduce al menos un objetivo de nmap, como `192.168.1.0/24` o `192.168.1.1-254`.",
-      "invalid_mac_mappings": "La línea {line} no es una asignación válida. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`.",
+      "invalid_mac_mappings": "La línea {line} no es una asignación válida o asigna una dirección MAC que ya asigna una línea anterior. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`.",
       "nmap_unavailable": "No se ha encontrado o no se ha podido ejecutar el programa nmap. Instala nmap donde se ejecuta Home Assistant."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "La línea {line} no es una asignación válida. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`."
+      "invalid_mac_mappings": "La línea {line} no es una asignación válida o asigna una dirección MAC que ya asigna una línea anterior. Usa `aa:bb:cc:dd:ee:ff;Nombre;Fabricante`."
     }
   },
   "exceptions": {

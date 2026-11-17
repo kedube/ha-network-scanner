@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Enter at least one nmap target such as `192.168.1.0/24` or `192.168.1.1-254`.",
-      "invalid_mac_mappings": "Line {line} is not a valid mapping. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`.",
+      "invalid_mac_mappings": "Line {line} is not a valid mapping, or maps a MAC address that an earlier line already maps. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`.",
       "nmap_unavailable": "The nmap binary could not be found or executed. Install nmap where Home Assistant runs."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "Line {line} is not a valid mapping. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`."
+      "invalid_mac_mappings": "Line {line} is not a valid mapping, or maps a MAC address that an earlier line already maps. Use `aa:bb:cc:dd:ee:ff;Name;Manufacturer`."
     }
   },
   "exceptions": {

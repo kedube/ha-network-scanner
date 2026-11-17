@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Ange minst ett nmap-mål, till exempel `192.168.1.0/24` eller `192.168.1.1-254`.",
-      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`.",
+      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning, eller mappar en MAC-adress som en tidigare rad redan mappar. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`.",
       "nmap_unavailable": "Programmet nmap hittades inte eller kunde inte köras. Installera nmap där Home Assistant körs."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`."
+      "invalid_mac_mappings": "Rad {line} är inte en giltig mappning, eller mappar en MAC-adress som en tidigare rad redan mappar. Använd `aa:bb:cc:dd:ee:ff;Namn;Tillverkare`."
     }
   },
   "exceptions": {

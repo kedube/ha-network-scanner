@@ -165,7 +165,8 @@ function normalizeDevice(raw, language) {
   const hints = [name, type, hostname, vendor].join(" ").toLowerCase();
   const icon = DEVICE_ICONS.find(([, pattern]) => pattern.test(hints))?.[0] ?? DEFAULT_ICON;
 
-  const key = mac || ip;
+  // One MAC can answer for several IPs (Wi-Fi repeaters, multi-homed hosts).
+  const key = mac && ip ? `${mac}@${ip}` : mac || ip;
   return {
     key,
     domId: `nsc-${key.replace(/[^a-z0-9]/gi, "")}`,

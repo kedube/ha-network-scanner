@@ -21,7 +21,7 @@
     },
     "error": {
       "invalid_ip_range": "Inserisci almeno un target nmap, ad esempio `192.168.1.0/24` o `192.168.1.1-254`.",
-      "invalid_mac_mappings": "La riga {line} non è un'associazione valida. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`.",
+      "invalid_mac_mappings": "La riga {line} non è un'associazione valida, oppure associa un indirizzo MAC già associato da una riga precedente. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`.",
       "nmap_unavailable": "Impossibile trovare o eseguire il programma nmap. Installa nmap dove è in esecuzione Home Assistant."
     },
     "abort": {
@@ -44,7 +44,7 @@
       }
     },
     "error": {
-      "invalid_mac_mappings": "La riga {line} non è un'associazione valida. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`."
+      "invalid_mac_mappings": "La riga {line} non è un'associazione valida, oppure associa un indirizzo MAC già associato da una riga precedente. Usa `aa:bb:cc:dd:ee:ff;Nome;Produttore`."
     }
   },
   "exceptions": {

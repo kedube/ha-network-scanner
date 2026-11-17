@@ -11,8 +11,8 @@ import voluptuous as vol
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
@@ -67,7 +67,7 @@ def legacy_mac_mappings_text(source: Mapping[str, Any]) -> str:
 
     def _slot_number(key: str) -> int:
         suffix = key[len(LEGACY_MAC_MAPPING_PREFIX) :]
-        return int(suffix) if suffix.isdigit() else 0
+        return int(suffix) if suffix.isdecimal() else 0
 
     keys = sorted(
         (
@@ -188,6 +188,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: NetworkScannerConfigEntr
             translation_key="nmap_unavailable",
             translation_placeholders={"error": str(err)},
         ) from err
+
+    # Kill a running sweep when the entry unloads (saving the options reloads
+    # it) or Home Assistant stops, rather than leave it running for up to
+    # NMAP_TIMEOUT. A plain listener, not async_listen_once: removing a
+    # once-listener after it has fired logs an error.
+    @callback
+    def _stop_scan_on_hass_stop(_event: Event) -> None:
+        client.stop()
+
+    entry.async_on_unload(client.stop)
+    entry.async_on_unload(hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, _stop_scan_on_hass_stop))
 
     coordinator = NetworkScannerCoordinator(hass, entry, client, scan_interval)
     entry.runtime_data = coordinator

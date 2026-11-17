@@ -1,9 +1,9 @@
 """Tests for the Network Scanner sensor."""
 from __future__ import annotations
 
+import subprocess
 from datetime import datetime, timedelta
 
-import nmap
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.const import ATTR_ENTITY_ID, STATE_UNAVAILABLE
@@ -120,7 +120,7 @@ async def test_failed_scan_marks_sensor_unavailable_until_next_success(
 ) -> None:
     good_scan = hass.states.get(ENTITY_ID).attributes["last_scan"]
 
-    mock_nmap.error = nmap.PortScannerTimeout("Timeout from nmap process")
+    mock_nmap.error = subprocess.TimeoutExpired("nmap", 600)
     await advance_time(hass, freezer, timedelta(minutes=15))
     assert hass.states.get(ENTITY_ID).state == STATE_UNAVAILABLE
 
